@@ -2159,6 +2159,7 @@
             }, [selectedClass]);
 
             const classStudents = useMemo(() => (students || []).filter(s => s.classId === selectedClass), [students, selectedClass]);
+            const totalAllStudents = (students || []).length;
             const isAllSelected = classStudents.length > 0 && classStudents.every(s => selectedStudentIds.includes(s.id));
 
             const handleToggleSelectAll = () => {
@@ -2389,9 +2390,12 @@
                     </div>
 
                     <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-4">
                             <span className="font-semibold text-slate-600">
-                                Total Siswa ({selectedClass}): <strong className="text-slate-900 font-extrabold">{classStudents.length}</strong>
+                                Total Siswa Rombel ({selectedClass}): <strong className="text-slate-900 font-extrabold">{classStudents.length}</strong>
+                            </span>
+                            <span className="font-semibold text-slate-600">
+                                Total Seluruh Siswa Madrasah: <strong className="text-sky-700 font-extrabold">{totalAllStudents}</strong>
                             </span>
                             <span className={`px-2.5 py-1 rounded-full font-bold ${
                                 selectedStudentIds.length > 0 ? 'bg-sky-100 text-sky-900 border border-sky-300' : 'bg-slate-100 text-slate-600'
@@ -2612,6 +2616,7 @@
             const [subTab, setSubTab] = useState('profile');
             const [editClassModal, setEditClassModal] = useState(false);
             const [editingClass, setEditingClass] = useState(null);
+            const [resetPasswordInput, setResetPasswordInput] = useState('');
             
             const [profileForm, setProfileForm] = useState({
                 name: teacher?.name || '',
@@ -2623,6 +2628,27 @@
 
             const [newClass, setNewClass] = useState({ id: '', name: '', level: 'VIII', room: 'Lab Komputer 1', schedule: '', capacity: 32, homeroom: '' });
             const [newTp, setNewTp] = useState({ code: '', name: '' });
+
+            const handleResetAllDatabase = (e) => {
+                e.preventDefault();
+                if (resetPasswordInput !== 'Kangguru00') {
+                    showToast('Kata sandi konfirmasi salah! Database tidak dihapus.', 'error');
+                    return;
+                }
+
+                triggerConfirm(
+                    '⚠️ KONFIRMASI HAPUS TOTAL DATABASE',
+                    'Apakah Anda benar-benar YAKIN ingin menghapus SELURUH database (Data Siswa, Nilai Formatif/Sumatif, Presensi, Denah PC Lab, & Kelompok)? Tindakan ini TIDAK DAPAT DIBATALKAN!',
+                    () => {
+                        setStudents([]);
+                        setScores({});
+                        setAttendance({});
+                        setTps([]);
+                        setResetPasswordInput('');
+                        showToast('Seluruh database SIMADRASAH berhasil dihapus total!');
+                    }
+                );
+            };
 
             const handleSaveProfile = (e) => {
                 e.preventDefault();
@@ -2757,6 +2783,12 @@
                             className={`py-2 px-3 font-bold text-xs transition border-b-2 whitespace-nowrap ${subTab === 'tps' ? 'border-sky-600 text-sky-800' : 'border-transparent text-slate-600 hover:text-slate-900'}`}
                         >
                             🎯 Tujuan Pembelajaran (TP)
+                        </button>
+                        <button 
+                            onClick={() => setSubTab('reset')}
+                            className={`py-2 px-3 font-bold text-xs transition border-b-2 whitespace-nowrap ${subTab === 'reset' ? 'border-rose-600 text-rose-800' : 'border-transparent text-slate-600 hover:text-slate-900'}`}
+                        >
+                            ⚠️ Danger Zone (Reset DB)
                         </button>
                     </div>
 
@@ -3091,6 +3123,41 @@
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
+                    )}
+
+                    {subTab === 'reset' && (
+                        <div className="bg-rose-50/60 border border-rose-200 p-6 rounded-2xl shadow-sm space-y-4 max-w-2xl">
+                            <h3 className="font-extrabold text-rose-900 text-sm border-b border-rose-200 pb-2 flex items-center gap-2">
+                                <Icon name="trash" className="w-5 h-5 text-rose-600" />
+                                <span>⚠️ Reset Database & Danger Zone</span>
+                            </h3>
+                            <p className="text-xs text-rose-800 leading-relaxed font-medium">
+                                Fitur ini akan menghapus secara permanen <strong>seluruh data siswa, nilai formatif & sumatif, riwayat presensi, denah PC client, serta Tujuan Pembelajaran (TP)</strong> dari sistem penyimpanan lokal dan Cloud Database Firebase.
+                            </p>
+                            <form onSubmit={handleResetAllDatabase} className="space-y-3 pt-2">
+                                <div>
+                                    <label className="block text-xs font-bold text-rose-900 mb-1">
+                                        Masukkan Kata Sandi Konfirmasi (Admin Password):
+                                    </label>
+                                    <input 
+                                        type="password" 
+                                        placeholder="Masukkan password..."
+                                        value={resetPasswordInput}
+                                        onChange={e => setResetPasswordInput(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white border border-rose-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                                    />
+                                </div>
+                                <div className="flex justify-end pt-2">
+                                    <button 
+                                        type="submit" 
+                                        className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center gap-2"
+                                    >
+                                        <Icon name="trash" className="w-4 h-4" />
+                                        <span>HAPUS SELURUH DATABASE</span>
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     )}
                 </div>
