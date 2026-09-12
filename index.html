@@ -2611,12 +2611,12 @@
                 </div>
             );
         }
-
-        function SettingsTab({ settings, setSettings, teacher, setTeacher, myClasses, setMyClasses, tps, setTps, students, setStudents, setScores, setAttendance, syncStatus, showToast, triggerConfirm }) {
+        function SettingsTab({ settings, setSettings, teacher, setTeacher, myClasses, setMyClasses, tps, setTps, students, setStudents, setScores, setAttendance, syncStatus, showToast, triggerConfirm, adminPassword, setAdminPassword }) {
             const [subTab, setSubTab] = useState('profile');
             const [editClassModal, setEditClassModal] = useState(false);
             const [editingClass, setEditingClass] = useState(null);
             const [resetPasswordInput, setResetPasswordInput] = useState('');
+            const [newAdminPassword, setNewAdminPassword] = useState('');
             
             const [profileForm, setProfileForm] = useState({
                 name: teacher?.name || '',
@@ -2850,6 +2850,39 @@
                                         className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
                                         placeholder="e.g. 081234567890"
                                     />
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-slate-100 space-y-3">
+                                <h4 className="font-bold text-slate-900 text-xs text-sky-700 flex items-center gap-1.5">
+                                    🔒 Keamanan & Password Admin Aplikasi
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Password Admin Baru:</label>
+                                        <input 
+                                            type="password"
+                                            value={newAdminPassword}
+                                            onChange={e => setNewAdminPassword(e.target.value)}
+                                            placeholder="Masukkan password admin baru..."
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        />
+                                    </div>
+                                    <button 
+                                        type="button"
+                                        onClick={() => {
+                                            if (!newAdminPassword.trim()) {
+                                                showToast('Password admin tidak boleh kosong!', 'error');
+                                                return;
+                                            }
+                                            setAdminPassword(newAdminPassword.trim());
+                                            setNewAdminPassword('');
+                                            showToast('Password Admin berhasil diperbarui!');
+                                        }}
+                                        className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow-sm transition"
+                                    >
+                                        Ubah Password Admin
+                                    </button>
                                 </div>
                             </div>
 
@@ -3169,6 +3202,50 @@
             const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
             const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+            const [adminPassword, setAdminPassword] = useState(() => {
+                try {
+                    return localStorage.getItem('simadrasah_admin_password') || 'admin123';
+                } catch(e) {
+                    return 'admin123';
+                }
+            });
+
+            const [isAuthenticated, setIsAuthenticated] = useState(() => {
+                try {
+                    return sessionStorage.getItem('simadrasah_authenticated') === 'true';
+                } catch(e) {
+                    return false;
+                }
+            });
+
+            const [loginInput, setLoginInput] = useState('');
+            const [loginError, setLoginError] = useState('');
+
+            const handleAdminLogin = (e) => {
+                e.preventDefault();
+                if (loginInput === adminPassword) {
+                    setIsAuthenticated(true);
+                    sessionStorage.setItem('simadrasah_authenticated', 'true');
+                    setLoginError('');
+                    setLoginInput('');
+                    showToast('Berhasil masuk sebagai Admin SIMADRASAH!');
+                } else {
+                    setLoginError('Password Admin salah! Silakan coba lagi.');
+                }
+            };
+
+            const handleAdminLogout = () => {
+                setIsAuthenticated(false);
+                sessionStorage.removeItem('simadrasah_authenticated');
+                showToast('Sesi Admin dikunci.');
+            };
+
+            useEffect(() => {
+                try {
+                    localStorage.setItem('simadrasah_admin_password', adminPassword);
+                } catch(e) {}
+            }, [adminPassword]);
+
             const [teacher, setTeacher] = useState(() => {
                 try {
                     const saved = localStorage.getItem('simadrasah_teacher');
@@ -3462,6 +3539,13 @@
                                 <span className="px-3 py-1 bg-sky-50 text-sky-800 border border-sky-200 rounded-full text-xs font-bold">
                                     {activeYear} ({activeSemester})
                                 </span>
+                                <button 
+                                    onClick={handleAdminLogout}
+                                    className="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-full text-xs font-bold transition flex items-center gap-1"
+                                    title="Kunci Akses Admin"
+                                >
+                                    <span>🔒 Lock</span>
+                                </button>
                             </div>
                         </header>
 
@@ -3491,10 +3575,56 @@
                                 <StudentManagementTab students={students} setStudents={setStudents} setScores={setScores} setAttendance={setAttendance} myClasses={myClasses} selectedClass={selectedClass} setSelectedClass={setSelectedClass} showToast={showToast} triggerConfirm={triggerConfirm} />
                             )}
                             {activeTab === 'pengaturan' && (
-                                <SettingsTab settings={settings} setSettings={setSettings} teacher={teacher} setTeacher={setTeacher} myClasses={myClasses} setMyClasses={setMyClasses} tps={tps} setTps={setTps} students={students} setStudents={setStudents} setScores={setScores} setAttendance={setAttendance} syncStatus={syncStatus} showToast={showToast} triggerConfirm={triggerConfirm} />
+                                <SettingsTab settings={settings} setSettings={setSettings} teacher={teacher} setTeacher={setTeacher} myClasses={myClasses} setMyClasses={setMyClasses} tps={tps} setTps={setTps} students={students} setStudents={setStudents} setScores={setScores} setAttendance={setAttendance} syncStatus={syncStatus} showToast={showToast} triggerConfirm={triggerConfirm} adminPassword={adminPassword} setAdminPassword={setAdminPassword} />
                             )}
                         </main>
                     </div>
+
+                    {!isAuthenticated && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+                            <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl space-y-6 border border-slate-100 text-center">
+                                <div className="w-16 h-16 rounded-2xl bg-sky-600 text-white font-black text-2xl flex items-center justify-center mx-auto shadow-lg shadow-sky-600/30">
+                                    M
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">SIMADRASAH LOGIN</h2>
+                                    <p className="text-xs text-slate-500 font-medium mt-1">Masukkan Password Admin untuk Membuka Akses Menu & Data</p>
+                                </div>
+
+                                <form onSubmit={handleAdminLogin} className="space-y-4 text-left">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Password Admin:</label>
+                                        <input 
+                                            type="password"
+                                            value={loginInput}
+                                            onChange={e => {
+                                                setLoginInput(e.target.value);
+                                                setLoginError('');
+                                            }}
+                                            placeholder="Masukkan password admin..."
+                                            className="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none transition"
+                                            autoFocus
+                                        />
+                                        {loginError && (
+                                            <p className="text-xs font-bold text-rose-600 mt-1.5 flex items-center gap-1">
+                                                <span>⚠️</span> {loginError}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <button 
+                                        type="submit"
+                                        className="w-full py-3 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-sky-600/25 transition transform active:scale-[0.98]"
+                                    >
+                                        🔓 Masuk ke Sistem
+                                    </button>
+                                </form>
+
+                                <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-600">
+                                    💡 <span className="font-semibold">Password Default:</span> <code className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-mono font-bold">admin123</code>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <ConfirmationModal 
                         isOpen={confirmModal.isOpen}
