@@ -86,39 +86,27 @@
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased selection:bg-sky-500 selection:text-white">
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+       // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'simadrasah-app';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "demo",
-            authDomain: "demo.firebaseapp.com",
-            projectId: "demo-project",
-            storageBucket: "demo.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:123456"
-        };
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyA3v19W60OQ5qfKYELEvmmkKaO-Gf6zHgs",
+  authDomain: "informatica-class.firebaseapp.com",
+  projectId: "informatica-class",
+  storageBucket: "informatica-class.firebasestorage.app",
+  messagingSenderId: "352869091816",
+  appId: "1:352869091816:web:63927391e58ece712bbc5d",
+  measurementId: "G-YCBJP7YFQF"
+};
 
-        try {
-            const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app);
-            const auth = getAuth(app);
-
-            window.FirebaseCloud = {
-                appId,
-                db,
-                auth,
-                doc,
-                setDoc,
-                getDoc,
-                onSnapshot,
-                signInAnonymously,
-                signInWithCustomToken
-            };
-        } catch (e) {
-            console.warn("Firebase Init Fallback:", e);
-        }
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
     </script>
 
     <div id="root"></div>
