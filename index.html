@@ -1,0 +1,2771 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMADRASAH - Azhary Mardhani, S.Kom.</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel Standalone -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- SheetJS (XLSX) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- jsPDF & AutoTable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            body {
+                background: white;
+                color: black;
+            }
+        }
+
+        .print-only {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased selection:bg-sky-500 selection:text-white">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'simadrasah-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "demo",
+            authDomain: "demo.firebaseapp.com",
+            projectId: "demo-project",
+            storageBucket: "demo.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:123456"
+        };
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const auth = getAuth(app);
+
+            window.FirebaseCloud = {
+                appId,
+                db,
+                auth,
+                doc,
+                setDoc,
+                getDoc,
+                onSnapshot,
+                signInAnonymously,
+                signInWithCustomToken
+            };
+        } catch (e) {
+            console.warn("Firebase Init Fallback:", e);
+        }
+    </script>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+        function Icon({ name, className = "w-5 h-5" }) {
+            switch (name) {
+                case 'dashboard':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>;
+                case 'attendance':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>;
+                case 'grading':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>;
+                case 'recap':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>;
+                case 'rdm':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>;
+                case 'klasemen':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>;
+                case 'students':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>;
+                case 'settings':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>;
+                case 'trash':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>;
+                case 'edit':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>;
+                case 'plus':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>;
+                case 'download':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>;
+                case 'upload':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>;
+                case 'pdf':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>;
+                case 'check':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>;
+                case 'x':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>;
+                case 'reset':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>;
+                case 'chevronLeft':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>;
+                case 'chevronRight':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg>;
+                case 'menu':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"/></svg>;
+                case 'cloud':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9M15 9A5 5 0 005.07 10.5M7 15l3-3m0 0l3 3m-3-3v8"/></svg>;
+                case 'pc':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>;
+                default:
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
+            }
+        }
+
+        const INITIAL_CLASSES = [
+            { id: '8A', name: 'Kelas VIII-A', level: 'VIII', room: 'Lab Komputer 1', schedule: 'Senin, 07:30 - 09:00', capacity: 32, homeroom: 'Dra. Hj. Siti Aminah' },
+            { id: '8B', name: 'Kelas VIII-B', level: 'VIII', room: 'Lab Komputer 1', schedule: 'Selasa, 09:30 - 11:00', capacity: 30, homeroom: 'Budi Santoso, S.Pd.' },
+            { id: '7A', name: 'Kelas VII-A', level: 'VII', room: 'Lab Komputer 2', schedule: 'Rabu, 08:00 - 09:30', capacity: 32, homeroom: 'Rina Wijaya, M.Pd.' },
+            { id: '9A', name: 'Kelas IX-A', level: 'IX', room: 'Lab Komputer 1', schedule: 'Kamis, 10:00 - 11:30', capacity: 28, homeroom: 'Ahmad Fauzi, S.Ag.' }
+        ];
+
+        const INITIAL_TPS = [
+            { id: 'tp-1', code: 'TP 1.1', name: 'Berpikir Komputasional & Algoritma Pemrograman' },
+            { id: 'tp-2', code: 'TP 2.1', name: 'Analisis Data & Pengolahan Lembar Kerja (Spreadsheet)' },
+            { id: 'tp-3', code: 'TP 3.1', name: 'Jaringan Komputer & Internet Sehat' },
+            { id: 'tp-4', code: 'TP 4.1', name: 'Dampak Sosial Informatika & Etika Digital' }
+        ];
+
+        const INITIAL_STUDENTS = [
+            { id: 'st-101', nisn: '8A-01', name: 'Ahmad Raihan Pratama', gender: 'L', classId: '8A' },
+            { id: 'st-102', nisn: '8A-02', name: 'Aisyah Nur Syafiqah', gender: 'P', classId: '8A' },
+            { id: 'st-103', nisn: '8A-03', name: 'Bagas Aditya Nugraha', gender: 'L', classId: '8A' },
+            { id: 'st-104', nisn: '8A-04', name: 'Dina Kusuma Putri', gender: 'P', classId: '8A' },
+            { id: 'st-105', nisn: '8A-05', name: 'Farhan Azhar Al-Ghazali', gender: 'L', classId: '8A' },
+            { id: 'st-106', nisn: '8A-06', name: 'Hana Maria Zhafira', gender: 'P', classId: '8A' },
+            { id: 'st-107', nisn: '8A-07', name: 'M. Rizky Ramadhan', gender: 'L', classId: '8A' },
+            { id: 'st-108', nisn: '8A-08', name: 'Nabila Zahra Syahrani', gender: 'P', classId: '8A' },
+            { id: 'st-201', nisn: '8B-01', name: 'Andi Maulana', gender: 'L', classId: '8B' },
+            { id: 'st-202', nisn: '8B-02', name: 'Bella Safira', gender: 'P', classId: '8B' },
+            { id: 'st-203', nisn: '8B-03', name: 'Fikri Haikal', gender: 'L', classId: '8B' }
+        ];
+
+        const INITIAL_SCORES = {
+            '8A': {
+                'st-101': { 'tp-1': 88, 'tp-2': 92, 'tp-3': 85, 'tp-4': 90, practical: 95, pas: 90 },
+                'st-102': { 'tp-1': 95, 'tp-2': 94, 'tp-3': 96, 'tp-4': 92, practical: 98, pas: 95 },
+                'st-103': { 'tp-1': 75, 'tp-2': 78, 'tp-3': 80, 'tp-4': 72, practical: 82, pas: 75 },
+                'st-104': { 'tp-1': 85, 'tp-2': 88, 'tp-3': 82, 'tp-4': 86, practical: 90, pas: 85 }
+            }
+        };
+
+        const INITIAL_ATTENDANCE = {
+            '2026-09-10_8A': {
+                'st-101': 'H', 'st-102': 'H', 'st-103': 'S', 'st-104': 'H',
+                'st-105': 'H', 'st-106': 'I', 'st-107': 'H', 'st-108': 'H'
+            }
+        };
+
+        function calculateInformaticsScore(studentId, classId, scores, tps, weights) {
+            const stScores = (scores[classId] && scores[classId][studentId]) || {};
+            
+            let tpSum = 0;
+            let tpCount = 0;
+            tps.forEach(tp => {
+                const val = parseFloat(stScores[tp.id]);
+                if (!isNaN(val)) {
+                    tpSum += val;
+                    tpCount++;
+                }
+            });
+
+            const avgFormative = tpCount > 0 ? Math.round(tpSum / tpCount) : 0;
+            const practicalScore = parseFloat(stScores.practical) || 0;
+            const pasScore = parseFloat(stScores.pas) || 0;
+
+            const wFormative = (weights.formative || 30) / 100;
+            const wPractical = (weights.practical || 40) / 100;
+            const wPas = (weights.pas || 30) / 100;
+
+            const finalScore = Math.round((avgFormative * wFormative) + (practicalScore * wPractical) + (pasScore * wPas));
+
+            let predicate = 'D';
+            if (finalScore >= 90) predicate = 'A';
+            else if (finalScore >= 80) predicate = 'B';
+            else if (finalScore >= 70) predicate = 'C';
+
+            return {
+                avgFormative,
+                practicalScore,
+                pasScore,
+                finalScore,
+                predicate,
+                descManual: stScores.descManual || ''
+            };
+        }
+
+        function generateCapaianDescription(res, tps) {
+            if (res.descManual && res.descManual.trim() !== '') return res.descManual;
+            if (res.finalScore === 0) return "Belum ada catatan nilai evaluasi semester.";
+
+            if (res.predicate === 'A') {
+                return `Menunjukkan penguasaan yang SANGAT BAIK dalam seluruh Capaian Pembelajaran Informatika, terutama pada pemahaman ${tps[0]?.name || 'materi pokok'} dan praktikum lab.`;
+            } else if (res.predicate === 'B') {
+                return `Menunjukkan penguasaan yang BAIK dalam mempraktikkan tugas informatika dan memahami logika komputasi. Perlu peningkatan pada konsistensi latihan.`;
+            } else if (res.predicate === 'C') {
+                return `Menunjukkan penguasaan CUKUP dalam materi dasar Informatika. Perlu bimbingan lebih lanjut pada analisis data dan praktikum mandiri.`;
+            } else {
+                return `Sangat MEMBUTUHKAN BIMBINGAN intensif dalam memahami materi Informatika dan keaktifan praktikum di laboratorium.`;
+            }
+        }
+
+        function getAttBadgeColor(status) {
+            switch (status) {
+                case 'H': return 'bg-emerald-100 text-emerald-900 border-emerald-300 font-bold';
+                case 'S': return 'bg-amber-100 text-amber-900 border-amber-300 font-bold';
+                case 'I': return 'bg-sky-100 text-sky-900 border-sky-300 font-bold';
+                case 'A': return 'bg-rose-100 text-rose-900 border-rose-300 font-bold';
+                case 'D': return 'bg-purple-100 text-purple-900 border-purple-300 font-bold';
+                case 'T': return 'bg-slate-200 text-slate-900 border-slate-300 font-bold';
+                default: return 'bg-slate-100 text-slate-700 border-slate-200';
+            }
+        }
+
+        function ToastContainer({ toasts }) {
+            return (
+                <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none">
+                    {toasts.map(t => (
+                        <div 
+                            key={t.id} 
+                            className={`pointer-events-auto px-4 py-3 rounded-xl shadow-lg font-semibold text-xs transition transform translate-y-0 flex items-center gap-2 ${
+                                t.type === 'error' ? 'bg-rose-900 text-white' : 'bg-slate-900 text-white'
+                            }`}
+                        >
+                            <span>{t.type === 'error' ? '⚠️' : '✅'}</span>
+                            <span>{t.message}</span>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        function ConfirmationModal({ isOpen, title, message, onConfirm, onCancel }) {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+                        <h3 className="text-sm font-extrabold text-slate-900">{title}</h3>
+                        <p className="text-xs text-slate-600 leading-relaxed">{message}</p>
+                        <div className="flex justify-end gap-2 pt-2">
+                            <button 
+                                onClick={onCancel}
+                                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+                            >
+                                Batal
+                            </button>
+                            <button 
+                                onClick={onConfirm}
+                                className="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition"
+                            >
+                                Ya, Lanjutkan Hapus
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function DashboardTab({ students, myClasses, teacher, activeYear, activeSemester, setActiveTab }) {
+            const totalStudents = students.length;
+            const totalClasses = myClasses.length;
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-gradient-to-r from-sky-800 to-indigo-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+                        <div className="relative z-10 space-y-2">
+                            <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-wider text-sky-100">
+                                SIMADRASAH • {activeYear} ({activeSemester})
+                            </span>
+                            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Selamat Datang, {teacher.name}</h2>
+                            <p className="text-xs sm:text-sm text-sky-100 max-w-2xl leading-relaxed">
+                                NIP: {teacher.nip} • Guru {teacher.subject} di {teacher.school}. Kelola presensi praktikum, input nilai grid, rekap leger, dan ekspor RDM secara terintegrasi.
+                            </p>
+                            
+                            <div className="pt-4 flex flex-wrap gap-3">
+                                <button onClick={() => setActiveTab('absensi')} className="px-4 py-2.5 bg-white text-sky-900 rounded-xl font-bold text-xs shadow-md hover:bg-sky-50 transition">
+                                    Presensi Lab
+                                </button>
+                                <button onClick={() => setActiveTab('penilaian')} className="px-4 py-2.5 bg-sky-700 text-white rounded-xl font-bold text-xs shadow-md hover:bg-sky-600 transition">
+                                    Input Nilai Grid
+                                </button>
+                                <button onClick={() => setActiveTab('rdm')} className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-xs shadow-md hover:bg-emerald-500 transition">
+                                    Ekspor RDM
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold text-slate-500">Total Siswa Aktif</p>
+                                <h3 className="text-2xl font-extrabold text-slate-900 mt-1">{totalStudents}</h3>
+                            </div>
+                            <div className="p-3 bg-sky-50 text-sky-600 rounded-2xl">
+                                <Icon name="students" className="w-6 h-6" />
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold text-slate-500">Total Rombel / Kelas</p>
+                                <h3 className="text-2xl font-extrabold text-slate-900 mt-1">{totalClasses}</h3>
+                            </div>
+                            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                                <Icon name="dashboard" className="w-6 h-6" />
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold text-slate-500">Mata Pelajaran</p>
+                                <h3 className="text-lg font-bold text-slate-900 mt-1">{teacher.subject}</h3>
+                            </div>
+                            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
+                                <Icon name="grading" className="w-6 h-6" />
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold text-slate-500">Tahun Pelajaran</p>
+                                <h3 className="text-lg font-bold text-slate-900 mt-1">{activeYear}</h3>
+                            </div>
+                            <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
+                                <Icon name="settings" className="w-6 h-6" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm space-y-4">
+                        <h3 className="font-bold text-slate-900 text-sm">Daftar Rombel & Lab Komputer</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {myClasses.map(c => {
+                                const stCount = students.filter(s => s.classId === c.id).length;
+                                return (
+                                    <div key={c.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-extrabold text-slate-900 text-sm">{c.name}</span>
+                                            <span className="px-2 py-0.5 bg-sky-100 text-sky-800 font-bold text-[10px] rounded-full">{c.level}</span>
+                                        </div>
+                                        <p className="text-xs text-slate-600">🏛️ {c.room}</p>
+                                        <p className="text-xs text-slate-600">👤 Wali: {c.homeroom || '-'}</p>
+                                        <div className="pt-2 flex items-center justify-between border-t border-slate-200 text-xs font-semibold text-slate-700">
+                                            <span>Siswa:</span>
+                                            <span className="font-bold text-sky-700">{stCount} / {c.capacity}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function AttendanceTab({ students, attendance, setAttendance, myClasses, selectedClass, setSelectedClass, showToast }) {
+            const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
+            const [subTab, setSubTab] = useState('input');
+
+            const classStudents = useMemo(() => students.filter(s => s.classId === selectedClass), [students, selectedClass]);
+            const attKey = `${attendanceDate}_${selectedClass}`;
+            const currentAtt = attendance[attKey] || {};
+
+            const handleStatusChange = (studentId, status) => {
+                setAttendance(prev => {
+                    const updated = { ...prev };
+                    if (!updated[attKey]) updated[attKey] = {};
+                    updated[attKey][studentId] = status;
+                    return updated;
+                });
+            };
+
+            const handleMarkAllHadir = () => {
+                setAttendance(prev => {
+                    const updated = { ...prev };
+                    if (!updated[attKey]) updated[attKey] = {};
+                    classStudents.forEach(s => {
+                        updated[attKey][s.id] = 'H';
+                    });
+                    return updated;
+                });
+                showToast(`Seluruh siswa ${selectedClass} ditandai Hadir (H)!`);
+            };
+
+            const attendanceDatesForClass = useMemo(() => {
+                const dates = Object.keys(attendance)
+                    .filter(k => k.endsWith(`_${selectedClass}`))
+                    .map(k => k.replace(`_${selectedClass}`, ''))
+                    .sort();
+                return dates.length > 0 ? dates : [attendanceDate];
+            }, [attendance, selectedClass, attendanceDate]);
+
+            const exportAttendancePDF = () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'landscape' });
+                
+                doc.setFontSize(14);
+                doc.text("REKAPITULASI PRESENSI MINGGUAN INFORMATIKA", 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Kelas: ${selectedClass} | Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 22);
+
+                const tableHeaders = ["No. Absen", "Nama Siswa", "L/P", ...attendanceDatesForClass.map((d, i) => `P-${i+1}`), "H", "S", "I", "A", "% Hadir"];
+                const tableData = classStudents.map(st => {
+                    let h = 0, s = 0, i = 0, a = 0;
+                    const attRow = attendanceDatesForClass.map(d => {
+                        const stAtt = (attendance[`${d}_${selectedClass}`] || {})[st.id] || '-';
+                        if (stAtt === 'H') h++;
+                        else if (stAtt === 'S') s++;
+                        else if (stAtt === 'I') i++;
+                        else if (stAtt === 'A') a++;
+                        return stAtt;
+                    });
+                    const totalP = attendanceDatesForClass.length;
+                    const pct = totalP > 0 ? Math.round((h / totalP) * 100) : 0;
+
+                    return [st.nisn, st.name, st.gender, ...attRow, h, s, i, a, `${pct}%`];
+                });
+
+                doc.autoTable({
+                    startY: 28,
+                    head: [tableHeaders],
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [2, 132, 199] },
+                    styles: { fontSize: 8 }
+                });
+
+                doc.save(`Rekap_Presensi_Informatika_${selectedClass}.pdf`);
+                showToast(`File PDF Presensi ${selectedClass} berhasil diunduh!`);
+            };
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Rombel / Kelas:</label>
+                                <select 
+                                    value={selectedClass} 
+                                    onChange={e => setSelectedClass(e.target.value)}
+                                    className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                >
+                                    {myClasses.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {subTab === 'input' && (
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Praktikum:</label>
+                                    <input 
+                                        type="date" 
+                                        value={attendanceDate}
+                                        onChange={e => setAttendanceDate(e.target.value)}
+                                        className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+                            <button 
+                                onClick={() => setSubTab('input')}
+                                className={`px-4 py-2 rounded-lg text-xs font-bold transition ${subTab === 'input' ? 'bg-white text-sky-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                            >
+                                Input Presensi Harian
+                            </button>
+                            <button 
+                                onClick={() => setSubTab('recap')}
+                                className={`px-4 py-2 rounded-lg text-xs font-bold transition ${subTab === 'recap' ? 'bg-white text-sky-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                            >
+                                Rekap Mingguan & Persentase
+                            </button>
+                        </div>
+                    </div>
+
+                    {subTab === 'input' ? (
+                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                            <div className="p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4 bg-slate-50/50">
+                                <div>
+                                    <h3 className="font-bold text-slate-900">Form Presensi Praktikum Lab</h3>
+                                    <p className="text-xs text-slate-600">Pilih status kehadiran siswa pada tanggal {attendanceDate}</p>
+                                </div>
+                                <button 
+                                    onClick={handleMarkAllHadir}
+                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm"
+                                >
+                                    <Icon name="check" className="w-4 h-4" />
+                                    <span>Tandai Semua Hadir (H)</span>
+                                </button>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-100 text-slate-800 text-xs font-bold uppercase tracking-wider">
+                                            <th className="py-3 px-4">No. Absen</th>
+                                            <th className="py-3 px-4">Nama LENGKAP Siswa</th>
+                                            <th className="py-3 px-4">L/P</th>
+                                            <th className="py-3 px-4 text-center">Status Kehadiran</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 text-sm">
+                                        {classStudents.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="4" className="py-8 text-center text-slate-500 font-medium">Belum ada data siswa di kelas ini.</td>
+                                            </tr>
+                                        ) : (
+                                            classStudents.map(st => {
+                                                const stStatus = currentAtt[st.id] || 'H';
+                                                return (
+                                                    <tr key={st.id} className="hover:bg-slate-50/80 transition">
+                                                        <td className="py-3 px-4 font-mono text-xs font-bold text-slate-700">{st.nisn}</td>
+                                                        <td className="py-3 px-4 font-bold text-slate-900">{st.name}</td>
+                                                        <td className="py-3 px-4 text-xs font-bold text-slate-700">{st.gender}</td>
+                                                        <td className="py-3 px-4">
+                                                            <div className="flex items-center justify-center gap-1.5">
+                                                                {['H', 'S', 'I', 'A', 'D', 'T'].map(stt => (
+                                                                    <button
+                                                                        key={stt}
+                                                                        onClick={() => handleStatusChange(st.id, stt)}
+                                                                        className={`w-8 h-8 rounded-lg text-xs font-bold transition ${
+                                                                            stStatus === stt 
+                                                                                ? getAttBadgeColor(stt) + ' ring-2 ring-slate-400' 
+                                                                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                                                        }`}
+                                                                    >
+                                                                        {stt}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                            <div className="p-5 border-b border-slate-100 flex items-center justify-between gap-4">
+                                <div>
+                                    <h3 className="font-bold text-slate-900">Rekapitulasi Presensi Mingguan Per Pertemuan</h3>
+                                    <p className="text-xs text-slate-600 font-medium">Matriks kehadiran dan persentase keaktifan siswa</p>
+                                </div>
+                                <button 
+                                    onClick={exportAttendancePDF}
+                                    className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2"
+                                >
+                                    <Icon name="pdf" className="w-4 h-4" />
+                                    <span>Cetak PDF Presensi</span>
+                                </button>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-100 text-slate-800 text-xs font-bold uppercase tracking-wider">
+                                            <th className="py-3 px-4">No. Absen</th>
+                                            <th className="py-3 px-4">Nama Siswa</th>
+                                            {attendanceDatesForClass.map((d, idx) => (
+                                                <th key={d} className="py-3 px-2 text-center">P-{idx+1}</th>
+                                            ))}
+                                            <th className="py-3 px-2 text-center text-emerald-800">H</th>
+                                            <th className="py-3 px-2 text-center text-amber-800">S</th>
+                                            <th className="py-3 px-2 text-center text-sky-800">I</th>
+                                            <th className="py-3 px-2 text-center text-rose-800">A</th>
+                                            <th className="py-3 px-4 text-center">Persentase (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 text-sm">
+                                        {classStudents.map(st => {
+                                            let h = 0, s = 0, i = 0, a = 0;
+                                            attendanceDatesForClass.forEach(d => {
+                                                const stt = (attendance[`${d}_${selectedClass}`] || {})[st.id];
+                                                if (stt === 'H') h++;
+                                                else if (stt === 'S') s++;
+                                                else if (stt === 'I') i++;
+                                                else if (stt === 'A') a++;
+                                            });
+                                            const totalP = attendanceDatesForClass.length;
+                                            const pct = totalP > 0 ? Math.round((h / totalP) * 100) : 0;
+
+                                            let pctColor = 'bg-emerald-100 text-emerald-900 border border-emerald-300';
+                                            if (pct < 75) pctColor = 'bg-rose-100 text-rose-900 border border-rose-300';
+                                            else if (pct < 90) pctColor = 'bg-amber-100 text-amber-900 border border-amber-300';
+
+                                            return (
+                                                <tr key={st.id} className="hover:bg-slate-50">
+                                                    <td className="py-2.5 px-4 font-mono text-xs font-bold text-slate-700">{st.nisn}</td>
+                                                    <td className="py-2.5 px-4 font-bold text-slate-900">{st.name}</td>
+                                                    {attendanceDatesForClass.map(d => {
+                                                        const stt = (attendance[`${d}_${selectedClass}`] || {})[st.id] || '-';
+                                                        return (
+                                                            <td key={d} className="py-2.5 px-2 text-center">
+                                                                <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${getAttBadgeColor(stt)}`}>
+                                                                    {stt}
+                                                                </span>
+                                                            </td>
+                                                        );
+                                                    })}
+                                                    <td className="py-2.5 px-2 text-center font-bold text-emerald-800">{h}</td>
+                                                    <td className="py-2.5 px-2 text-center font-bold text-amber-800">{s}</td>
+                                                    <td className="py-2.5 px-2 text-center font-bold text-sky-800">{i}</td>
+                                                    <td className="py-2.5 px-2 text-center font-bold text-rose-800">{a}</td>
+                                                    <td className="py-2.5 px-4 text-center">
+                                                        <span className={`px-2.5 py-1 rounded-full text-xs font-extrabold ${pctColor}`}>
+                                                            {pct}%
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function GradingTab({ students, scores, setScores, myClasses, selectedClass, setSelectedClass, tps, settings, showToast }) {
+            const classStudents = useMemo(() => students.filter(s => s.classId === selectedClass), [students, selectedClass]);
+
+            const handleScoreChange = (studentId, field, value) => {
+                setScores(prev => {
+                    const updated = { ...prev };
+                    if (!updated[selectedClass]) updated[selectedClass] = {};
+                    if (!updated[selectedClass][studentId]) updated[selectedClass][studentId] = {};
+                    updated[selectedClass][studentId][field] = value;
+                    return updated;
+                });
+            };
+
+            const handleResetDesc = (studentId) => {
+                setScores(prev => {
+                    const updated = { ...prev };
+                    if (updated[selectedClass] && updated[selectedClass][studentId]) {
+                        updated[selectedClass][studentId].descManual = '';
+                    }
+                    return updated;
+                });
+                showToast('Deskripsi capaian dikembalikan ke generasi otomatis!');
+            };
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Rombel / Kelas:</label>
+                                <select 
+                                    value={selectedClass} 
+                                    onChange={e => setSelectedClass(e.target.value)}
+                                    className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                >
+                                    {myClasses.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="text-xs text-slate-700 bg-sky-50 px-3 py-2 rounded-xl border border-sky-200 font-medium">
+                            <span>Bobot: </span>
+                            <strong className="text-sky-900">Formatif ({settings.weights.formative}%)</strong> • 
+                            <strong className="text-sky-900"> Praktikum ({settings.weights.practical}%)</strong> • 
+                            <strong className="text-sky-900"> PAS ({settings.weights.pas}%)</strong>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                            <h3 className="font-bold text-slate-900 text-sm">Spreadsheet Input Nilai Formatif & Sumatif</h3>
+                            <span className="text-xs text-slate-600">Ketik angka nilai (0-100) langsung di sel tabel.</span>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr className="bg-slate-100 text-slate-800 font-bold uppercase tracking-wider border-b border-slate-200">
+                                        <th className="py-3 px-3 min-w-[80px]">No. Absen</th>
+                                        <th className="py-3 px-3 min-w-[180px]">Nama Siswa</th>
+                                        {tps.map(tp => (
+                                            <th key={tp.id} className="py-3 px-2 text-center min-w-[90px] bg-sky-100/80 text-sky-950 font-extrabold">{tp.code}</th>
+                                        ))}
+                                        <th className="py-3 px-2 text-center min-w-[100px] bg-emerald-100 text-emerald-950 font-extrabold">Praktikum Lab</th>
+                                        <th className="py-3 px-2 text-center min-w-[90px] bg-indigo-100 text-indigo-950 font-extrabold">PAS Sumatif</th>
+                                        <th className="py-3 px-2 text-center min-w-[80px] bg-slate-200 text-slate-950 font-black">NA</th>
+                                        <th className="py-3 px-2 text-center min-w-[60px] bg-slate-200 text-slate-950 font-black">Pred.</th>
+                                        <th className="py-3 px-3 min-w-[320px]">Deskripsi Capaian (Auto / Manual)</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {classStudents.map(st => {
+                                        const res = calculateInformaticsScore(st.id, selectedClass, scores, tps, settings.weights);
+                                        const autoDesc = generateCapaianDescription(res, tps);
+
+                                        return (
+                                            <tr key={st.id} className="hover:bg-slate-50/80 transition">
+                                                <td className="py-2 px-3 font-mono font-bold text-slate-700">{st.nisn}</td>
+                                                <td className="py-2 px-3 font-bold text-slate-900">{st.name}</td>
+                                                
+                                                {tps.map(tp => {
+                                                    const val = (scores[selectedClass] && scores[selectedClass][st.id]) ? scores[selectedClass][st.id][tp.id] || '' : '';
+                                                    return (
+                                                        <td key={tp.id} className="py-1 px-1 text-center bg-sky-50/30">
+                                                            <input 
+                                                                type="number" 
+                                                                min="0" 
+                                                                max="100" 
+                                                                value={val}
+                                                                onChange={e => handleScoreChange(st.id, tp.id, e.target.value)}
+                                                                className="w-full text-center py-1 px-1 font-bold text-slate-900 bg-white border border-slate-300 rounded focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                                                placeholder="0"
+                                                            />
+                                                        </td>
+                                                    );
+                                                })}
+
+                                                <td className="py-1 px-1 text-center bg-emerald-50/30">
+                                                    <input 
+                                                        type="number" 
+                                                        min="0" 
+                                                        max="100" 
+                                                        value={(scores[selectedClass] && scores[selectedClass][st.id]) ? scores[selectedClass][st.id].practical || '' : ''}
+                                                        onChange={e => handleScoreChange(st.id, 'practical', e.target.value)}
+                                                        className="w-full text-center py-1 px-1 font-bold text-slate-900 bg-white border border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                                        placeholder="0"
+                                                    />
+                                                </td>
+
+                                                <td className="py-1 px-1 text-center bg-indigo-50/30">
+                                                    <input 
+                                                        type="number" 
+                                                        min="0" 
+                                                        max="100" 
+                                                        value={(scores[selectedClass] && scores[selectedClass][st.id]) ? scores[selectedClass][st.id].pas || '' : ''}
+                                                        onChange={e => handleScoreChange(st.id, 'pas', e.target.value)}
+                                                        className="w-full text-center py-1 px-1 font-bold text-slate-900 bg-white border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                                        placeholder="0"
+                                                    />
+                                                </td>
+
+                                                <td className="py-2 px-2 text-center font-extrabold text-slate-950 bg-slate-100">{res.finalScore}</td>
+                                                <td className="py-2 px-2 text-center font-extrabold bg-slate-100">
+                                                    <span className={`px-2 py-0.5 rounded font-black ${
+                                                        res.predicate === 'A' ? 'bg-emerald-200 text-emerald-950' :
+                                                        res.predicate === 'B' ? 'bg-blue-200 text-blue-950' :
+                                                        res.predicate === 'C' ? 'bg-amber-200 text-amber-950' : 'bg-rose-200 text-rose-950'
+                                                    }`}>
+                                                        {res.predicate}
+                                                    </span>
+                                                </td>
+
+                                                <td className="py-1 px-2">
+                                                    <div className="flex items-center gap-1">
+                                                        <textarea 
+                                                            rows="2"
+                                                            value={autoDesc}
+                                                            onChange={e => handleScoreChange(st.id, 'descManual', e.target.value)}
+                                                            className="w-full p-1.5 text-xs font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none resize-none"
+                                                        />
+                                                        {res.descManual && (
+                                                            <button 
+                                                                onClick={() => handleResetDesc(st.id)}
+                                                                title="Reset ke Deskripsi Otomatis"
+                                                                className="p-1 text-slate-500 hover:text-sky-700 transition"
+                                                            >
+                                                                <Icon name="reset" className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function RecapTab({ students, scores, myClasses, tps, settings, teacher, activeYear, activeSemester, showToast }) {
+            const [filterClass, setFilterClass] = useState('ALL');
+            const [searchQuery, setSearchQuery] = useState('');
+
+            const filteredStudents = useMemo(() => {
+                let list = students;
+                if (filterClass !== 'ALL') {
+                    if (filterClass.startsWith('TINGKAT_')) {
+                        const lvl = filterClass.replace('TINGKAT_', '');
+                        const classIdsInLvl = myClasses.filter(c => c.level === lvl).map(c => c.id);
+                        list = list.filter(s => classIdsInLvl.includes(s.classId));
+                    } else {
+                        list = list.filter(s => s.classId === filterClass);
+                    }
+                }
+                if (searchQuery.trim() !== '') {
+                    const q = searchQuery.toLowerCase();
+                    list = list.filter(s => s.name.toLowerCase().includes(q) || s.nisn.toLowerCase().includes(q));
+                }
+                return list;
+            }, [students, filterClass, searchQuery, myClasses]);
+
+            const exportLegerPDF = () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'landscape' });
+
+                doc.setFontSize(14);
+                doc.text("LEGER NILAI INFORMATIKA KURIKULUM MERDEKA", 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Madrasah: ${teacher.school} | TP: ${activeYear} (${activeSemester}) | Filter: ${filterClass}`, 14, 22);
+
+                const headCols = ["No. Absen", "Nama Siswa", "Kelas", "Rata Formatif", "Praktikum", "PAS", "NA", "Predikat", "Deskripsi Capaian"];
+                const bodyRows = filteredStudents.map(st => {
+                    const res = calculateInformaticsScore(st.id, st.classId, scores, tps, settings.weights);
+                    const desc = generateCapaianDescription(res, tps);
+                    return [st.nisn, st.name, st.classId, res.avgFormative, res.practicalScore, res.pasScore, res.finalScore, res.predicate, desc];
+                });
+
+                doc.autoTable({
+                    startY: 28,
+                    head: [headCols],
+                    body: bodyRows,
+                    theme: 'grid',
+                    headStyles: { fillColor: [7, 89, 133] },
+                    styles: { fontSize: 8 }
+                });
+
+                doc.save(`Leger_Informatika_${filterClass}.pdf`);
+                showToast(`PDF Leger Nilai (${filterClass}) berhasil diunduh!`);
+            };
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Rombel / Kelas:</label>
+                                <select 
+                                    value={filterClass} 
+                                    onChange={e => setFilterClass(e.target.value)}
+                                    className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                >
+                                    <option value="ALL">Semua Kelas / Angkatan</option>
+                                    <option value="TINGKAT_VII">Seluruh Kelas VII</option>
+                                    <option value="TINGKAT_VIII">Seluruh Kelas VIII</option>
+                                    <option value="TINGKAT_IX">Seluruh Kelas IX</option>
+                                    {myClasses.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">Cari Siswa:</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Nama / No. Absen..."
+                                    value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                    className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                />
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={exportLegerPDF}
+                            className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-2"
+                        >
+                            <Icon name="pdf" className="w-4 h-4" />
+                            <span>Cetak PDF Leger Nilai</span>
+                        </button>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr className="bg-slate-100 text-slate-800 font-bold uppercase tracking-wider border-b border-slate-200">
+                                        <th className="py-3 px-3">No. Absen</th>
+                                        <th className="py-3 px-3">Nama Siswa</th>
+                                        <th className="py-3 px-2">Kelas</th>
+                                        <th className="py-3 px-2 text-center">Formatif</th>
+                                        <th className="py-3 px-2 text-center">Praktikum</th>
+                                        <th className="py-3 px-2 text-center">PAS</th>
+                                        <th className="py-3 px-2 text-center bg-slate-200 font-black text-slate-950">NA</th>
+                                        <th className="py-3 px-2 text-center">Pred.</th>
+                                        <th className="py-3 px-3">Deskripsi Capaian Pembelajaran</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {filteredStudents.map(st => {
+                                        const res = calculateInformaticsScore(st.id, st.classId, scores, tps, settings.weights);
+                                        const desc = generateCapaianDescription(res, tps);
+
+                                        return (
+                                            <tr key={st.id} className="hover:bg-slate-50">
+                                                <td className="py-2.5 px-3 font-mono font-bold text-slate-700">{st.nisn}</td>
+                                                <td className="py-2.5 px-3 font-bold text-slate-900">{st.name}</td>
+                                                <td className="py-2.5 px-2 font-bold text-slate-700">{st.classId}</td>
+                                                <td className="py-2.5 px-2 text-center font-bold text-slate-800">{res.avgFormative}</td>
+                                                <td className="py-2.5 px-2 text-center font-bold text-slate-800">{res.practicalScore}</td>
+                                                <td className="py-2.5 px-2 text-center font-bold text-slate-800">{res.pasScore}</td>
+                                                <td className="py-2.5 px-2 text-center font-black text-slate-950 bg-slate-100">{res.finalScore}</td>
+                                                <td className="py-2.5 px-2 text-center font-extrabold">
+                                                    <span className={`px-2 py-0.5 rounded text-xs font-black ${
+                                                        res.predicate === 'A' ? 'bg-emerald-200 text-emerald-950' :
+                                                        res.predicate === 'B' ? 'bg-blue-200 text-blue-950' :
+                                                        res.predicate === 'C' ? 'bg-amber-200 text-amber-950' : 'bg-rose-200 text-rose-950'
+                                                    }`}>
+                                                        {res.predicate}
+                                                    </span>
+                                                </td>
+                                                <td className="py-2.5 px-3 font-medium text-slate-800 max-w-xs leading-relaxed">{desc}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function RdmExportTab({ students, scores, attendance, myClasses, tps, settings, teacher, activeYear, activeSemester, showToast }) {
+            const [filterScope, setFilterScope] = useState('ALL');
+
+            const filteredStudents = useMemo(() => {
+                let list = students;
+                if (filterScope !== 'ALL') {
+                    if (filterScope.startsWith('TINGKAT_')) {
+                        const lvl = filterScope.replace('TINGKAT_', '');
+                        const classIdsInLvl = myClasses.filter(c => c.level === lvl).map(c => c.id);
+                        list = list.filter(s => classIdsInLvl.includes(s.classId));
+                    } else {
+                        list = list.filter(s => s.classId === filterScope);
+                    }
+                }
+                return list;
+            }, [students, filterScope, myClasses]);
+
+            const exportCombinedPDF = () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'landscape' });
+
+                doc.setFontSize(14);
+                doc.text("DOKUMEN INTEGRASI RAPOR DIGITAL MADRASAH (RDM)", 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Madrasah: ${teacher.school} | Mapel: ${teacher.subject} | Cakupan: ${filterScope}`, 14, 22);
+
+                const headCols = ["No. Absen", "Nama Siswa", "Kelas", "NA Formatif", "NA Praktikum", "PAS", "Nilai Akhir", "Predikat", "Deskripsi RDM"];
+                const bodyRows = filteredStudents.map(st => {
+                    const res = calculateInformaticsScore(st.id, st.classId, scores, tps, settings.weights);
+                    const desc = generateCapaianDescription(res, tps);
+                    return [st.nisn, st.name, st.classId, res.avgFormative, res.practicalScore, res.pasScore, res.finalScore, res.predicate, desc];
+                });
+
+                doc.autoTable({
+                    startY: 28,
+                    head: [headCols],
+                    body: bodyRows,
+                    theme: 'grid',
+                    headStyles: { fillColor: [12, 74, 110] },
+                    styles: { fontSize: 8 }
+                });
+
+                doc.save(`Ekspor_RDM_Informatika_${filterScope}.pdf`);
+                showToast(`PDF Ekspor RDM (${filterScope}) berhasil diunduh!`);
+            };
+
+            const exportRdmCSV = () => {
+                let csvContent = "data:text/csv;charset=utf-8,NO_ABSEN,NAMA,KELAS,NILAI_AKHIR,PREDIKAT,DESKRIPSI\n";
+                filteredStudents.forEach(st => {
+                    const res = calculateInformaticsScore(st.id, st.classId, scores, tps, settings.weights);
+                    const desc = generateCapaianDescription(res, tps).replace(/"/g, '""');
+                    csvContent += `"${st.nisn}","${st.name}","${st.classId}",${res.finalScore},"${res.predicate}","${desc}"\n`;
+                });
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `Ekspor_RDM_${filterScope}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast(`File CSV RDM (${filterScope}) berhasil diunduh!`);
+            };
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Rombel / Kelas:</label>
+                            <select 
+                                value={filterScope} 
+                                onChange={e => setFilterScope(e.target.value)}
+                                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            >
+                                <option value="ALL">Semua Kelas / Angkatan</option>
+                                <option value="TINGKAT_VII">Seluruh Kelas VII</option>
+                                <option value="TINGKAT_VIII">Seluruh Kelas VIII</option>
+                                <option value="TINGKAT_IX">Seluruh Kelas IX</option>
+                                {myClasses.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <button 
+                                onClick={exportRdmCSV}
+                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-2"
+                            >
+                                <Icon name="download" className="w-4 h-4" />
+                                <span>Unduh CSV RDM</span>
+                            </button>
+                            <button 
+                                onClick={exportCombinedPDF}
+                                className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-2"
+                            >
+                                <Icon name="pdf" className="w-4 h-4" />
+                                <span>Cetak PDF Laporan RDM</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                        <h3 className="font-bold text-slate-900 mb-3 text-sm">Pratinjau Matriks Rekap RDM</h3>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr className="bg-slate-100 text-slate-800 font-bold uppercase">
+                                        <th className="py-2.5 px-3">No. Absen</th>
+                                        <th className="py-2.5 px-3">Nama Siswa</th>
+                                        <th className="py-2.5 px-2">Kelas</th>
+                                        <th className="py-2.5 px-2 text-center">Nilai Akhir</th>
+                                        <th className="py-2.5 px-2 text-center">Predikat</th>
+                                        <th className="py-2.5 px-3">Deskripsi Capaian</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {filteredStudents.map(st => {
+                                        const res = calculateInformaticsScore(st.id, st.classId, scores, tps, settings.weights);
+                                        const desc = generateCapaianDescription(res, tps);
+                                        return (
+                                            <tr key={st.id} className="hover:bg-slate-50">
+                                                <td className="py-2 px-3 font-mono font-bold text-slate-700">{st.nisn}</td>
+                                                <td className="py-2 px-3 font-bold text-slate-900">{st.name}</td>
+                                                <td className="py-2 px-2 font-bold text-slate-700">{st.classId}</td>
+                                                <td className="py-2 px-2 text-center font-black text-slate-950">{res.finalScore}</td>
+                                                <td className="py-2 px-2 text-center font-extrabold">{res.predicate}</td>
+                                                <td className="py-2 px-3 font-medium text-slate-800">{desc}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function KlasemenTab({ students, scores, myClasses, tps, settings }) {
+            const [filterScope, setFilterScope] = useState('ALL');
+
+            const rankedStudents = useMemo(() => {
+                let list = students;
+                if (filterScope !== 'ALL') {
+                    if (filterScope.startsWith('TINGKAT_')) {
+                        const lvl = filterScope.replace('TINGKAT_', '');
+                        const classIdsInLvl = myClasses.filter(c => c.level === lvl).map(c => c.id);
+                        list = list.filter(s => classIdsInLvl.includes(s.classId));
+                    } else {
+                        list = list.filter(s => s.classId === filterScope);
+                    }
+                }
+
+                return list.map(st => {
+                    const res = calculateInformaticsScore(st.id, st.classId, scores, tps, settings.weights);
+                    return { ...st, ...res };
+                }).sort((a, b) => b.finalScore - a.finalScore);
+            }, [students, filterScope, myClasses, scores, tps, settings]);
+
+            const top3 = rankedStudents.slice(0, 3);
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Rombel / Kelas:</label>
+                            <select 
+                                value={filterScope} 
+                                onChange={e => setFilterScope(e.target.value)}
+                                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            >
+                                <option value="ALL">Semua Kelas / Angkatan</option>
+                                <option value="TINGKAT_VII">Seluruh Kelas VII</option>
+                                <option value="TINGKAT_VIII">Seluruh Kelas VIII</option>
+                                <option value="TINGKAT_IX">Seluruh Kelas IX</option>
+                                {myClasses.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {top3.length >= 3 && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center md:mt-6 order-2 md:order-1">
+                                <div className="text-3xl mb-1">🥈</div>
+                                <div className="text-xs font-black text-slate-500 uppercase tracking-wider">Juara 2</div>
+                                <div className="font-black text-slate-900 mt-1">{top3[1].name}</div>
+                                <div className="text-xs text-slate-600 font-bold">{top3[1].classId}</div>
+                                <div className="text-2xl font-black text-sky-700 mt-2">{top3[1].finalScore}</div>
+                            </div>
+
+                            <div className="bg-gradient-to-b from-amber-50 to-white p-6 rounded-2xl border-2 border-amber-300 shadow-md text-center order-1 md:order-2 transform md:-translate-y-2">
+                                <div className="text-4xl mb-1">🥇</div>
+                                <div className="text-xs font-black text-amber-800 uppercase tracking-wider">Juara 1 (Bintang Pelajar)</div>
+                                <div className="font-black text-slate-900 text-lg mt-1">{top3[0].name}</div>
+                                <div className="text-xs text-slate-600 font-bold">{top3[0].classId}</div>
+                                <div className="text-3xl font-black text-amber-700 mt-2">{top3[0].finalScore}</div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center md:mt-8 order-3">
+                                <div className="text-3xl mb-1">🥉</div>
+                                <div className="text-xs font-black text-amber-900 uppercase tracking-wider">Juara 3</div>
+                                <div className="font-black text-slate-900 mt-1">{top3[2].name}</div>
+                                <div className="text-xs text-slate-600 font-bold">{top3[2].classId}</div>
+                                <div className="text-2xl font-black text-amber-900 mt-2">{top3[2].finalScore}</div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                        <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr className="bg-slate-100 text-slate-800 font-bold uppercase">
+                                    <th className="py-3 px-4">Peringkat</th>
+                                    <th className="py-3 px-4">No. Absen</th>
+                                    <th className="py-3 px-4">Nama Siswa</th>
+                                    <th className="py-3 px-3">Kelas</th>
+                                    <th className="py-3 px-3 text-center">Nilai Akhir</th>
+                                    <th className="py-3 px-3 text-center">Predikat</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {rankedStudents.map((st, idx) => (
+                                    <tr key={st.id} className="hover:bg-slate-50">
+                                        <td className="py-3 px-4 font-black text-slate-800">#{idx + 1}</td>
+                                        <td className="py-3 px-4 font-mono font-bold text-slate-700">{st.nisn}</td>
+                                        <td className="py-3 px-4 font-bold text-slate-900">{st.name}</td>
+                                        <td className="py-3 px-3 font-bold text-slate-700">{st.classId}</td>
+                                        <td className="py-3 px-3 text-center font-black text-sky-800 text-sm">{st.finalScore}</td>
+                                        <td className="py-3 px-3 text-center font-extrabold">{st.predicate}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        }
+
+        function PcLabTab({ students, pcData, setPcData, myClasses, selectedClass, setSelectedClass, attendance, showToast }) {
+            const TOTAL_PCS = 32;
+            const [selectedPc, setSelectedPc] = useState(null);
+            const [pcModalOpen, setPcModalOpen] = useState(false);
+            const [pcForm, setPcForm] = useState({ studentId: '', condition: 'normal', notes: '' });
+
+            const classStudents = useMemo(() => students.filter(s => s.classId === selectedClass), [students, selectedClass]);
+            const currentClassPc = pcData[selectedClass] || {};
+
+            const pcList = useMemo(() => {
+                const list = [];
+                for (let i = 1; i <= TOTAL_PCS; i++) {
+                    const pcNum = `PC-${i < 10 ? '0' + i : i}`;
+                    const assign = currentClassPc[pcNum] || { studentId: '', condition: 'normal', notes: '' };
+                    const student = students.find(s => s.id === assign.studentId);
+                    list.push({ pcNum, ...assign, student });
+                }
+                return list;
+            }, [currentClassPc, students]);
+
+            // Formasi Denah Mengular (Serpentine Grid 8x4)
+            const gridRows = useMemo(() => {
+                const rows = [];
+                for (let r = 0; r < 4; r++) {
+                    const rowItems = pcList.slice(r * 8, (r + 1) * 8);
+                    if (r % 2 === 0) {
+                        // Baris Genap (Baris 1 & 3): Dari Kanan ke Kiri (PC-01 di Paling Kanan, PC-17 di Paling Kanan)
+                        rows.push({
+                            rowNum: r + 1,
+                            directionLabel: 'Kanan ke Kiri ◀',
+                            items: [...rowItems].reverse()
+                        });
+                    } else {
+                        // Baris Ganjil (Baris 2 & 4): Dari Kiri ke Kanan (PC-09 di Kiri belakang PC-08, PC-25 di Kiri belakang PC-24)
+                        rows.push({
+                            rowNum: r + 1,
+                            directionLabel: 'Kiri ke Kanan ▶',
+                            items: rowItems
+                        });
+                    }
+                }
+                return rows;
+            }, [pcList]);
+
+            const stats = useMemo(() => {
+                let assigned = 0;
+                let empty = 0;
+                let maintenance = 0;
+                let broken = 0;
+
+                pcList.forEach(pc => {
+                    if (pc.studentId) assigned++;
+                    else empty++;
+                    if (pc.condition === 'maintenance') maintenance++;
+                    if (pc.condition === 'broken') broken++;
+                });
+
+                return { assigned, empty, maintenance, broken, total: TOTAL_PCS };
+            }, [pcList]);
+
+            const handleAutoPlot = () => {
+                setPcData(prev => {
+                    const updated = { ...prev };
+                    if (!updated[selectedClass]) updated[selectedClass] = {};
+                    
+                    classStudents.forEach((st, idx) => {
+                        if (idx < TOTAL_PCS) {
+                            const pcNum = `PC-${idx + 1 < 10 ? '0' + (idx + 1) : idx + 1}`;
+                            const existingCond = (updated[selectedClass][pcNum] && updated[selectedClass][pcNum].condition) || 'normal';
+                            const existingNotes = (updated[selectedClass][pcNum] && updated[selectedClass][pcNum].notes) || '';
+                            updated[selectedClass][pcNum] = {
+                                studentId: st.id,
+                                condition: existingCond,
+                                notes: existingNotes
+                            };
+                        }
+                    });
+                    return updated;
+                });
+                showToast(`Auto-plotting ${Math.min(classStudents.length, TOTAL_PCS)} siswa kelas ${selectedClass} ke PC-01 s/d PC-${Math.min(classStudents.length, TOTAL_PCS)} berhasil!`);
+            };
+
+            const handleResetPlot = () => {
+                setPcData(prev => {
+                    const updated = { ...prev };
+                    updated[selectedClass] = {};
+                    return updated;
+                });
+                showToast(`Plotting PC untuk kelas ${selectedClass} telah dikosongkan!`);
+            };
+
+            const openEditPc = (pc) => {
+                setSelectedPc(pc.pcNum);
+                setPcForm({
+                    studentId: pc.studentId || '',
+                    condition: pc.condition || 'normal',
+                    notes: pc.notes || ''
+                });
+                setPcModalOpen(true);
+            };
+
+            const savePcEdit = (e) => {
+                e.preventDefault();
+                setPcData(prev => {
+                    const updated = { ...prev };
+                    if (!updated[selectedClass]) updated[selectedClass] = {};
+                    updated[selectedClass][selectedPc] = { ...pcForm };
+                    return updated;
+                });
+                setPcModalOpen(false);
+                showToast(`Pengaturan Komputer ${selectedPc} berhasil diperbarui!`);
+            };
+
+            const exportPcPDF = () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'landscape' });
+
+                doc.setFontSize(14);
+                doc.text("DENAH POSISI KOMPUTER CLIENT SISWA (LAB KOMPUTER)", 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Kelas: ${selectedClass} | Total Komputer: ${TOTAL_PCS} Unit | Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 22);
+
+                const headCols = ["No. PC", "Siswa Terpasang", "No. Absen / ID", "L/P", "Kondisi Perangkat", "Catatan Lab"];
+                const bodyRows = pcList.map(pc => [
+                    pc.pcNum,
+                    pc.student ? pc.student.name : '(Kosong / Tidak Digunakan)',
+                    pc.student ? pc.student.nisn : '-',
+                    pc.student ? pc.student.gender : '-',
+                    pc.condition === 'normal' ? 'Baik / Normal' : pc.condition === 'maintenance' ? 'Perlu Perbaikan' : 'Rusak / Non-aktif',
+                    pc.notes || '-'
+                ]);
+
+                doc.autoTable({
+                    startY: 28,
+                    head: [headCols],
+                    body: bodyRows,
+                    theme: 'grid',
+                    headStyles: { fillColor: [2, 132, 199] },
+                    styles: { fontSize: 8 }
+                });
+
+                doc.save(`Denah_Lab_Komputer_${selectedClass}.pdf`);
+                showToast(`PDF Denah Komputer Lab (${selectedClass}) berhasil diunduh!`);
+            };
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Rombel / Kelas:</label>
+                                <select 
+                                    value={selectedClass} 
+                                    onChange={e => setSelectedClass(e.target.value)}
+                                    className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                >
+                                    {myClasses.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            <button 
+                                onClick={handleAutoPlot}
+                                className="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
+                                title="Plotting otomatis berdasarkan urutan daftar siswa"
+                            >
+                                <Icon name="check" className="w-4 h-4" />
+                                <span>⚡ Auto-Plot Urut Absen</span>
+                            </button>
+
+                            <button 
+                                onClick={handleResetPlot}
+                                className="px-3.5 py-2 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 border border-slate-200 font-bold text-xs rounded-xl transition flex items-center gap-1.5"
+                            >
+                                <Icon name="reset" className="w-4 h-4" />
+                                <span>Kosongkan Plot</span>
+                            </button>
+
+                            <button 
+                                onClick={exportPcPDF}
+                                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
+                            >
+                                <Icon name="pdf" className="w-4 h-4" />
+                                <span>Cetak Denah PDF</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Komputer</p>
+                                <h4 className="text-xl font-extrabold text-slate-900 mt-0.5">{stats.total} PC</h4>
+                            </div>
+                            <div className="p-2.5 bg-slate-100 text-slate-700 rounded-xl">
+                                <Icon name="pc" className="w-5 h-5" />
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Siswa Terpasang</p>
+                                <h4 className="text-xl font-extrabold text-sky-700 mt-0.5">{stats.assigned} Siswa</h4>
+                            </div>
+                            <div className="p-2.5 bg-sky-50 text-sky-700 rounded-xl">
+                                <Icon name="students" className="w-5 h-5" />
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">PC Kosong</p>
+                                <h4 className="text-xl font-extrabold text-slate-600 mt-0.5">{stats.empty} Unit</h4>
+                            </div>
+                            <div className="p-2.5 bg-slate-50 text-slate-500 rounded-xl">
+                                <Icon name="pc" className="w-5 h-5" />
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Perlu Perbaikan</p>
+                                <h4 className="text-xl font-extrabold text-amber-700 mt-0.5">{stats.maintenance + stats.broken} Unit</h4>
+                            </div>
+                            <div className="p-2.5 bg-amber-50 text-amber-700 rounded-xl">
+                                <Icon name="settings" className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                            <div>
+                                <h3 className="font-extrabold text-slate-900 text-sm">Tata Letak Mengular Client Lab (PC-01 s/d PC-32)</h3>
+                                <p className="text-xs text-slate-500">Urutan mengular: PC-01 di kanan depan ➔ PC-08 di kiri depan ➔ PC-09 di belakang PC-08 ➔ PC-16 di kanan.</p>
+                            </div>
+                            
+                            <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-600">
+                                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Normal & Terisi</span>
+                                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-slate-300 inline-block"></span> PC Kosong</span>
+                                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500 inline-block"></span> Perlu Perbaikan</span>
+                                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-rose-500 inline-block"></span> Rusak / Non-aktif</span>
+                            </div>
+                        </div>
+
+                        {/* Indikator Papan Tulis / Depan Lab */}
+                        <div className="w-full py-2.5 bg-slate-900 text-white text-center font-extrabold text-xs rounded-xl shadow-sm tracking-widest uppercase flex items-center justify-center gap-2 border-2 border-slate-700">
+                            <span>📺</span>
+                            <span>DEPAN LAB KOMPUTER / PAPAN TULIS & PROYEKTOR</span>
+                            <span>📺</span>
+                        </div>
+
+                        {/* Rendering Baris Mengular */}
+                        <div className="space-y-4 pt-2">
+                            {gridRows.map((row) => (
+                                <div key={row.rowNum} className="space-y-2 bg-slate-50/60 p-3 rounded-2xl border border-slate-200/80">
+                                    <div className="flex items-center justify-between px-1 text-[11px] font-extrabold text-slate-700">
+                                        <span className="bg-sky-100 text-sky-900 px-2.5 py-0.5 rounded-full border border-sky-300">
+                                            Baris {row.rowNum}
+                                        </span>
+                                        <span className="text-slate-500 font-mono text-[10px]">
+                                            Arah Alur: <strong className="text-slate-800">{row.directionLabel}</strong>
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
+                                        {row.items.map(pc => {
+                                            let cardBg = "bg-white border-slate-200 hover:border-sky-400";
+                                            let statusBadge = "bg-slate-100 text-slate-700";
+                                            let statusText = "Kosong";
+
+                                            if (pc.condition === 'broken') {
+                                                cardBg = "bg-rose-50/50 border-rose-200 hover:border-rose-400";
+                                                statusBadge = "bg-rose-100 text-rose-800";
+                                                statusText = "Rusak";
+                                            } else if (pc.condition === 'maintenance') {
+                                                cardBg = "bg-amber-50/50 border-amber-200 hover:border-amber-400";
+                                                statusBadge = "bg-amber-100 text-amber-800";
+                                                statusText = "Servis";
+                                            } else if (pc.student) {
+                                                cardBg = "bg-sky-50/40 border-sky-200 hover:border-sky-500";
+                                                statusBadge = "bg-emerald-100 text-emerald-800";
+                                                statusText = "Terisi";
+                                            }
+
+                                            return (
+                                                <div 
+                                                    key={pc.pcNum}
+                                                    onClick={() => openEditPc(pc)}
+                                                    className={`p-3 rounded-xl border shadow-sm transition cursor-pointer flex flex-col justify-between min-h-[110px] relative group ${cardBg}`}
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="font-mono font-black text-xs text-slate-800">{pc.pcNum}</span>
+                                                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase ${statusBadge}`}>
+                                                            {statusText}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="my-2 text-center">
+                                                        <Icon name="pc" className={`w-7 h-7 mx-auto ${pc.student ? 'text-sky-600' : 'text-slate-300'}`} />
+                                                        <div className="font-bold text-xs text-slate-900 line-clamp-2 mt-1 leading-snug">
+                                                            {pc.student ? pc.student.name : <span className="text-slate-400 italic text-[11px]">Kosong</span>}
+                                                        </div>
+                                                        {pc.student && (
+                                                            <span className="text-[10px] font-mono font-bold text-sky-700">{pc.student.nisn}</span>
+                                                        )}
+                                                    </div>
+
+                                                    {pc.notes && (
+                                                        <div className="text-[9px] text-amber-800 bg-amber-100/80 px-1.5 py-0.5 rounded truncate font-medium" title={pc.notes}>
+                                                            ⚠️ {pc.notes}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {pcModalOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+                                <div className="flex items-center justify-between border-b pb-3">
+                                    <h3 className="font-extrabold text-slate-900 text-sm">Pengaturan Komputer {selectedPc} ({selectedClass})</h3>
+                                    <button onClick={() => setPcModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-700">
+                                        <Icon name="x" className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                <form onSubmit={savePcEdit} className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Pilih Siswa Pengguna:</label>
+                                        <select 
+                                            value={pcForm.studentId}
+                                            onChange={e => setPcForm({ ...pcForm, studentId: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        >
+                                            <option value="">-- Kosong (Tidak Digunakan) --</option>
+                                            {classStudents.map(st => (
+                                                <option key={st.id} value={st.id}>
+                                                    {st.nisn} - {st.name} ({st.gender})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Status Hardware Komputer:</label>
+                                        <select 
+                                            value={pcForm.condition}
+                                            onChange={e => setPcForm({ ...pcForm, condition: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        >
+                                            <option value="normal">✅ Normal / Siap Digunakan</option>
+                                            <option value="maintenance">⚠️ Perlu Perbaikan / Maintenance</option>
+                                            <option value="broken">❌ Rusak / Out of Order</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Catatan Spesifikasi / Masalah Lab:</label>
+                                        <textarea 
+                                            rows="2"
+                                            value={pcForm.notes}
+                                            onChange={e => setPcForm({ ...pcForm, notes: e.target.value })}
+                                            placeholder="e.g. Mouse klik kanan tidak berfungsi, keyboard tombol Space agak keras"
+                                            className="w-full p-2 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none resize-none"
+                                        />
+                                    </div>
+
+                                    <div className="flex justify-end gap-2 pt-2 border-t">
+                                        <button 
+                                            type="button"
+                                            onClick={() => setPcModalOpen(false)}
+                                            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+                                        >
+                                            Batal
+                                        </button>
+                                        <button 
+                                            type="submit"
+                                            className="px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm transition"
+                                        >
+                                            Simpan Posisi PC
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function StudentManagementTab({ students, setStudents, setScores, setAttendance, myClasses, selectedClass, setSelectedClass, showToast, triggerConfirm }) {
+            const [editingId, setEditingId] = useState(null);
+            const [editForm, setEditForm] = useState({ name: '', nisn: '', gender: 'L', classId: '' });
+            const [newStudent, setNewStudent] = useState({ name: '', nisn: '', gender: 'L' });
+            const [previewData, setPreviewData] = useState(null);
+            const [selectedStudentIds, setSelectedStudentIds] = useState([]);
+
+            const classStudents = useMemo(() => students.filter(s => s.classId === selectedClass), [students, selectedClass]);
+
+            useEffect(() => {
+                setSelectedStudentIds([]);
+            }, [selectedClass]);
+
+            const isAllSelected = classStudents.length > 0 && selectedStudentIds.length === classStudents.length;
+
+            const handleToggleSelectAll = () => {
+                if (isAllSelected) {
+                    setSelectedStudentIds([]);
+                } else {
+                    setSelectedStudentIds(classStudents.map(s => s.id));
+                }
+            };
+
+            const handleToggleSelectStudent = (id) => {
+                setSelectedStudentIds(prev => 
+                    prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+                );
+            };
+
+            const handleAddStudent = (e) => {
+                e.preventDefault();
+                if (!newStudent.name.trim() || !newStudent.nisn.trim()) {
+                    showToast('Nama dan ID Absen wajib diisi!', 'error');
+                    return;
+                }
+                const created = {
+                    id: 'st-' + Date.now(),
+                    nisn: newStudent.nisn.trim(),
+                    name: newStudent.name.trim(),
+                    gender: newStudent.gender,
+                    classId: selectedClass
+                };
+                setStudents(prev => [...prev, created]);
+                setNewStudent({ name: '', nisn: '', gender: 'L' });
+                showToast(`Siswa ${created.name} berhasil ditambahkan!`);
+            };
+
+            const startEdit = (st) => {
+                setEditingId(st.id);
+                setEditForm({ name: st.name, nisn: st.nisn, gender: st.gender, classId: st.classId });
+            };
+
+            const saveEdit = (id) => {
+                setStudents(prev => prev.map(s => s.id === id ? { ...s, ...editForm } : s));
+                setEditingId(null);
+                showToast('Data siswa berhasil diperbarui!');
+            };
+
+            const handleBulkDelete = (targetIds, labelMessage) => {
+                if (!targetIds || targetIds.length === 0) {
+                    showToast('Pilih setidaknya satu siswa untuk dihapus!', 'error');
+                    return;
+                }
+
+                triggerConfirm(
+                    'Hapus Siswa Massal',
+                    `Apakah Anda yakin ingin menghapus ${targetIds.length} siswa terpilih ${labelMessage}? Seluruh riwayat presensi dan nilainya akan dihapus permanen dari database.`,
+                    () => {
+                        const targetSet = new Set(targetIds);
+
+                        setStudents(prev => prev.filter(s => !targetSet.has(s.id)));
+
+                        if (setScores) {
+                            setScores(prev => {
+                                const updatedScores = { ...prev };
+                                Object.keys(updatedScores).forEach(clsKey => {
+                                    if (updatedScores[clsKey]) {
+                                        const clsScores = { ...updatedScores[clsKey] };
+                                        targetIds.forEach(stId => delete clsScores[stId]);
+                                        updatedScores[clsKey] = clsScores;
+                                    }
+                                });
+                                return updatedScores;
+                            });
+                        }
+
+                        if (setAttendance) {
+                            setAttendance(prev => {
+                                const updatedAtt = { ...prev };
+                                Object.keys(updatedAtt).forEach(attKey => {
+                                    if (updatedAtt[attKey]) {
+                                        const dayAtt = { ...updatedAtt[attKey] };
+                                        targetIds.forEach(stId => delete dayAtt[stId]);
+                                        updatedAtt[attKey] = dayAtt;
+                                    }
+                                });
+                                return updatedAtt;
+                            });
+                        }
+
+                        setSelectedStudentIds([]);
+                        showToast(`Berhasil menghapus ${targetIds.length} siswa beserta seluruh riwayat nilainya!`);
+                    }
+                );
+            };
+
+            const handleDeleteStudent = (st) => {
+                triggerConfirm(
+                    'Hapus Permanen Data Siswa',
+                    `Apakah Anda yakin ingin menghapus data siswa ${st.name} (${st.nisn})? Semua catatan absensi dan nilainya akan dihapus permanen dari database.`,
+                    () => {
+                        setStudents(prev => prev.filter(s => s.id !== st.id));
+
+                        if (setScores) {
+                            setScores(prev => {
+                                const updatedScores = { ...prev };
+                                Object.keys(updatedScores).forEach(clsKey => {
+                                    if (updatedScores[clsKey] && updatedScores[clsKey][st.id]) {
+                                        const clsScores = { ...updatedScores[clsKey] };
+                                        delete clsScores[st.id];
+                                        updatedScores[clsKey] = clsScores;
+                                    }
+                                });
+                                return updatedScores;
+                            });
+                        }
+
+                        if (setAttendance) {
+                            setAttendance(prev => {
+                                const updatedAtt = { ...prev };
+                                Object.keys(updatedAtt).forEach(attKey => {
+                                    if (updatedAtt[attKey] && updatedAtt[attKey][st.id]) {
+                                        const dayAtt = { ...updatedAtt[attKey] };
+                                        delete dayAtt[st.id];
+                                        updatedAtt[attKey] = dayAtt;
+                                    }
+                                });
+                                return updatedAtt;
+                            });
+                        }
+
+                        showToast(`Siswa ${st.name} beserta seluruh riwayat absensi & nilainya telah dihapus permanen!`);
+                    }
+                );
+            };
+
+            const handleDownloadTemplate = () => {
+                const data = [
+                    ["NO_ABSEN_ID", "NAMA_LENGKAP", "JENIS_KELAMIN", "KELAS"],
+                    [`${selectedClass}-01`, "Contoh Siswa Pratama", "L", selectedClass],
+                    [`${selectedClass}-02`, "Contoh Siswi Aisyah", "P", selectedClass]
+                ];
+                const ws = XLSX.utils.aoa_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Template_Siswa");
+                XLSX.writeFile(wb, `Template_Siswa_${selectedClass}.xlsx`);
+            };
+
+            const handleFileUpload = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const bstr = evt.target.result;
+                    const wb = XLSX.read(bstr, { type: 'binary' });
+                    const wsname = wb.SheetNames[0];
+                    const ws = wb.Sheets[wsname];
+                    const rawData = XLSX.utils.sheet_to_json(ws);
+
+                    const validRows = [];
+                    rawData.forEach(row => {
+                        if (row.NO_ABSEN_ID && row.NAMA_LENGKAP) {
+                            validRows.push({
+                                id: 'st-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+                                nisn: String(row.NO_ABSEN_ID).trim(),
+                                name: String(row.NAMA_LENGKAP).trim(),
+                                gender: (row.JENIS_KELAMIN || 'L').toUpperCase(),
+                                classId: selectedClass
+                            });
+                        }
+                    });
+
+                    setPreviewData(validRows);
+                };
+                reader.readAsBinaryString(file);
+            };
+
+            const confirmImport = () => {
+                if (!previewData) return;
+                setStudents(prev => [...prev, ...previewData]);
+                showToast(`Berhasil mengimpor ${previewData.length} siswa ke kelas ${selectedClass}!`);
+                setPreviewData(null);
+            };
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Rombel / Kelas:</label>
+                            <select 
+                                value={selectedClass} 
+                                onChange={e => setSelectedClass(e.target.value)}
+                                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            >
+                                {myClasses.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <button 
+                                onClick={handleDownloadTemplate}
+                                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition flex items-center gap-2"
+                            >
+                                <Icon name="download" className="w-4 h-4" />
+                                <span>Unduh Template Excel</span>
+                            </button>
+                            <label className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2">
+                                <Icon name="upload" className="w-4 h-4" />
+                                <span>Upload File Excel</span>
+                                <input type="file" accept=".xlsx, .xls, .csv" onChange={handleFileUpload} className="hidden" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-4">
+                            <span className="font-semibold text-slate-600">
+                                Total Siswa ({selectedClass}): <strong className="text-slate-900 font-extrabold">{classStudents.length}</strong>
+                            </span>
+                            <span className={`px-2.5 py-1 rounded-full font-bold ${
+                                selectedStudentIds.length > 0 ? 'bg-sky-100 text-sky-900 border border-sky-300' : 'bg-slate-100 text-slate-600'
+                            }`}>
+                                Terpilih: {selectedStudentIds.length} Siswa
+                            </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            {selectedStudentIds.length > 0 && (
+                                <button
+                                    onClick={() => handleBulkDelete(selectedStudentIds, `di kelas ${selectedClass}`)}
+                                    className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-sm transition flex items-center gap-1.5"
+                                >
+                                    <Icon name="trash" className="w-4 h-4" />
+                                    <span>Hapus {selectedStudentIds.length} Siswa Terpilih</span>
+                                </button>
+                            )}
+
+                            {classStudents.length > 0 && (
+                                <button
+                                    onClick={() => handleBulkDelete(classStudents.map(s => s.id), `seluruh kelas ${selectedClass}`)}
+                                    className="px-3.5 py-2 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 border border-slate-200 font-bold rounded-xl transition flex items-center gap-1.5"
+                                >
+                                    <Icon name="trash" className="w-4 h-4" />
+                                    <span>Hapus Semua Siswa ({selectedClass})</span>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {previewData && (
+                        <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h4 className="font-bold text-amber-900 text-xs">Pratinjau Data Import Excel ({previewData.length} Siswa)</h4>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={confirmImport} className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700">Impor Sekarang</button>
+                                    <button onClick={() => setPreviewData(null)} className="px-3 py-1 bg-slate-200 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-300">Batal</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleAddStudent} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center gap-3">
+                        <input 
+                            type="text" 
+                            placeholder="No. Absen / ID (e.g. 8A-09)" 
+                            value={newStudent.nisn}
+                            onChange={e => setNewStudent({ ...newStudent, nisn: e.target.value })}
+                            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 w-36"
+                        />
+                        <input 
+                            type="text" 
+                            placeholder="Nama Lengkap Siswa" 
+                            value={newStudent.name}
+                            onChange={e => setNewStudent({ ...newStudent, name: e.target.value })}
+                            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 flex-1 min-w-[200px]"
+                        />
+                        <select 
+                            value={newStudent.gender}
+                            onChange={e => setNewStudent({ ...newStudent, gender: e.target.value })}
+                            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        >
+                            <option value="L">L</option>
+                            <option value="P">P</option>
+                        </select>
+                        <button type="submit" className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                            <Icon name="plus" className="w-4 h-4" />
+                            <span>Tambah Siswa</span>
+                        </button>
+                    </form>
+
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                        <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr className="bg-slate-100 text-slate-800 font-bold uppercase">
+                                    <th className="py-3 px-3 text-center w-10">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={isAllSelected}
+                                            onChange={handleToggleSelectAll}
+                                            className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                                            title="Pilih / Batal Pilih Semua"
+                                        />
+                                    </th>
+                                    <th className="py-3 px-4">No. Absen</th>
+                                    <th className="py-3 px-4">Nama Lengkap Siswa</th>
+                                    <th className="py-3 px-3">L/P</th>
+                                    <th className="py-3 px-3">Kelas</th>
+                                    <th className="py-3 px-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {classStudents.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="6" className="py-8 text-center text-slate-500 font-medium">Belum ada data siswa di kelas ini.</td>
+                                    </tr>
+                                ) : (
+                                    classStudents.map(st => {
+                                        const isEditing = editingId === st.id;
+                                        const isSelected = selectedStudentIds.includes(st.id);
+                                        return (
+                                            <tr key={st.id} className={`transition ${isSelected ? 'bg-sky-50/60' : 'hover:bg-slate-50'}`}>
+                                                <td className="py-2.5 px-3 text-center">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={isSelected}
+                                                        onChange={() => handleToggleSelectStudent(st.id)}
+                                                        className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                                                    />
+                                                </td>
+                                                <td className="py-2.5 px-4 font-mono font-bold text-slate-700">
+                                                    {isEditing ? (
+                                                        <input 
+                                                            type="text" 
+                                                            value={editForm.nisn} 
+                                                            onChange={e => setEditForm({ ...editForm, nisn: e.target.value })}
+                                                            className="px-2 py-1 border rounded w-24 text-xs font-bold text-slate-900"
+                                                        />
+                                                    ) : st.nisn}
+                                                </td>
+                                                <td className="py-2.5 px-4 font-bold text-slate-900">
+                                                    {isEditing ? (
+                                                        <input 
+                                                            type="text" 
+                                                            value={editForm.name} 
+                                                            onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                                            className="px-2 py-1 border rounded w-full text-xs font-bold text-slate-900"
+                                                        />
+                                                    ) : st.name}
+                                                </td>
+                                                <td className="py-2.5 px-3 text-slate-700 font-bold">
+                                                    {isEditing ? (
+                                                        <select 
+                                                            value={editForm.gender} 
+                                                            onChange={e => setEditForm({ ...editForm, gender: e.target.value })}
+                                                            className="px-2 py-1 border rounded text-xs font-bold text-slate-900"
+                                                        >
+                                                            <option value="L">L</option>
+                                                            <option value="P">P</option>
+                                                        </select>
+                                                    ) : st.gender}
+                                                </td>
+                                                <td className="py-2.5 px-3 text-slate-700 font-bold">{st.classId}</td>
+                                                <td className="py-2.5 px-4 text-center">
+                                                    {isEditing ? (
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <button onClick={() => saveEdit(st.id)} className="p-1 bg-emerald-100 text-emerald-800 rounded hover:bg-emerald-200">
+                                                                <Icon name="check" className="w-4 h-4" />
+                                                            </button>
+                                                            <button onClick={() => setEditingId(null)} className="p-1 bg-slate-100 text-slate-800 rounded hover:bg-slate-200">
+                                                                <Icon name="x" className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <button onClick={() => startEdit(st)} className="text-slate-500 hover:text-sky-600 transition p-1">
+                                                                <Icon name="edit" className="w-4 h-4" />
+                                                            </button>
+                                                            <button onClick={() => handleDeleteStudent(st)} className="text-slate-500 hover:text-rose-600 transition p-1">
+                                                                <Icon name="trash" className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        }
+
+        function SettingsTab({ settings, setSettings, teacher, setTeacher, myClasses, setMyClasses, tps, setTps, students, setStudents, setScores, setAttendance, syncStatus, showToast, triggerConfirm }) {
+            const [subTab, setSubTab] = useState('profile');
+            
+            const [profileForm, setProfileForm] = useState({
+                name: teacher?.name || '',
+                nip: teacher?.nip || '',
+                subject: teacher?.subject || '',
+                school: teacher?.school || '',
+                phone: teacher?.phone || ''
+            });
+
+            const [newClass, setNewClass] = useState({ id: '', name: '', level: 'VIII', room: 'Lab Komputer 1', schedule: '', capacity: 32, homeroom: '' });
+            const [newTp, setNewTp] = useState({ code: '', name: '' });
+
+            const handleSaveProfile = (e) => {
+                e.preventDefault();
+                if (!profileForm.name.trim() || !profileForm.school.trim()) {
+                    showToast('Nama Guru dan Nama Madrasah wajib diisi!', 'error');
+                    return;
+                }
+                setTeacher({
+                    ...teacher,
+                    ...profileForm
+                });
+                showToast('Profil Guru & Madrasah berhasil diperbarui!');
+            };
+
+            const handleAddClass = (e) => {
+                e.preventDefault();
+                if (!newClass.id.trim() || !newClass.name.trim()) {
+                    showToast('Kode dan Nama Rombel wajib diisi!', 'error');
+                    return;
+                }
+                setMyClasses(prev => [...prev, { ...newClass, id: newClass.id.toUpperCase() }]);
+                setNewClass({ id: '', name: '', level: 'VIII', room: 'Lab Komputer 1', schedule: '', capacity: 32, homeroom: '' });
+                showToast('Rombel baru berhasil ditambahkan!');
+            };
+
+            const handleDeleteClass = (clsId) => {
+                triggerConfirm(
+                    'Hapus Rombel & Seluruh Siswa di Dalamnya', 
+                    `PERHATIAN: Menghapus Rombel ${clsId} akan MENGHAPUS OTOMATIS seluruh data siswa, catatan nilai, dan presensi yang terdaftar di Rombel ${clsId} dari database! Apakah Anda yakin?`, 
+                    () => {
+                        const studentsInClass = students.filter(s => s.classId === clsId);
+                        const studentIdsInClass = new Set(studentsInClass.map(s => s.id));
+
+                        setStudents(prev => prev.filter(s => s.classId !== clsId));
+
+                        setScores(prev => {
+                            const updated = { ...prev };
+                            delete updated[clsId];
+                            Object.keys(updated).forEach(cKey => {
+                                if (updated[cKey]) {
+                                    studentIdsInClass.forEach(sId => {
+                                        delete updated[cKey][sId];
+                                    });
+                                }
+                            });
+                            return updated;
+                        });
+
+                        setAttendance(prev => {
+                            const updated = { ...prev };
+                            Object.keys(updated).forEach(attKey => {
+                                if (attKey.endsWith(`_${clsId}`)) {
+                                    delete updated[attKey];
+                                } else if (updated[attKey]) {
+                                    studentIdsInClass.forEach(sId => {
+                                        delete updated[attKey][sId];
+                                    });
+                                }
+                            });
+                            return updated;
+                        });
+
+                        setMyClasses(prev => prev.filter(c => c.id !== clsId));
+                        showToast(`Rombel ${clsId} beserta ${studentsInClass.length} siswa & seluruh nilainya berhasil dihapus!`);
+                    }
+                );
+            };
+
+            const handleAddTp = (e) => {
+                e.preventDefault();
+                if (!newTp.code.trim() || !newTp.name.trim()) {
+                    showToast('Kode dan Deskripsi TP wajib diisi!', 'error');
+                    return;
+                }
+                setTps(prev => [...prev, { id: 'tp-' + Date.now(), ...newTp }]);
+                setNewTp({ code: '', name: '' });
+                showToast('Tujuan Pembelajaran (TP) berhasil ditambahkan!');
+            };
+
+            const handleDeleteTp = (tpId) => {
+                triggerConfirm('Hapus Tujuan Pembelajaran', 'Apakah Anda yakin ingin menghapus TP ini?', () => {
+                    setTps(prev => prev.filter(t => t.id !== tpId));
+                    showToast('TP berhasil dihapus!');
+                });
+            };
+
+            return (
+                <div className="space-y-6">
+                    <div className="flex border-b border-slate-200 gap-2 sm:gap-4 overflow-x-auto pb-1">
+                        <button 
+                            onClick={() => setSubTab('profile')}
+                            className={`py-2 px-3 font-bold text-xs transition border-b-2 whitespace-nowrap ${subTab === 'profile' ? 'border-sky-600 text-sky-800' : 'border-transparent text-slate-600 hover:text-slate-900'}`}
+                        >
+                            👨‍🏫 Profil Guru & Sekolah
+                        </button>
+                        <button 
+                            onClick={() => setSubTab('classes')}
+                            className={`py-2 px-3 font-bold text-xs transition border-b-2 whitespace-nowrap ${subTab === 'classes' ? 'border-sky-600 text-sky-800' : 'border-transparent text-slate-600 hover:text-slate-900'}`}
+                        >
+                            🏫 Pengaturan Kelas & Rombel
+                        </button>
+                        <button 
+                            onClick={() => setSubTab('academic')}
+                            className={`py-2 px-3 font-bold text-xs transition border-b-2 whitespace-nowrap ${subTab === 'academic' ? 'border-sky-600 text-sky-800' : 'border-transparent text-slate-600 hover:text-slate-900'}`}
+                        >
+                            ⚙️ Bobot & Akademik
+                        </button>
+                        <button 
+                            onClick={() => setSubTab('tps')}
+                            className={`py-2 px-3 font-bold text-xs transition border-b-2 whitespace-nowrap ${subTab === 'tps' ? 'border-sky-600 text-sky-800' : 'border-transparent text-slate-600 hover:text-slate-900'}`}
+                        >
+                            🎯 Tujuan Pembelajaran (TP)
+                        </button>
+                    </div>
+
+                    {subTab === 'profile' && (
+                        <form onSubmit={handleSaveProfile} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 max-w-3xl">
+                            <h3 className="font-bold text-slate-900 text-sm border-b pb-2">Identitas & Profil Guru Pengampu</h3>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Lengkap & Gelar:</label>
+                                    <input 
+                                        type="text" 
+                                        value={profileForm.name}
+                                        onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        placeholder="e.g. Azhary Mardhani, S.Kom."
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">NIP / NUPTK:</label>
+                                    <input 
+                                        type="text" 
+                                        value={profileForm.nip}
+                                        onChange={e => setProfileForm({ ...profileForm, nip: e.target.value })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        placeholder="e.g. 19880512 201503 1 002"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Mata Pelajaran Utama:</label>
+                                    <input 
+                                        type="text" 
+                                        value={profileForm.subject}
+                                        onChange={e => setProfileForm({ ...profileForm, subject: e.target.value })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        placeholder="e.g. Informatika"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Madrasah / Sekolah:</label>
+                                    <input 
+                                        type="text" 
+                                        value={profileForm.school}
+                                        onChange={e => setProfileForm({ ...profileForm, school: e.target.value })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        placeholder="e.g. MTs Negeri 1 Jakarta"
+                                    />
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">No. WhatsApp / Kontak (Opsional):</label>
+                                    <input 
+                                        type="text" 
+                                        value={profileForm.phone}
+                                        onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        placeholder="e.g. 081234567890"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-2 flex justify-end">
+                                <button type="submit" className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2">
+                                    <Icon name="check" className="w-4 h-4" />
+                                    <span>Simpan Profil Guru</span>
+                                </button>
+                            </div>
+                        </form>
+                    )}
+
+                    {subTab === 'classes' && (
+                        <div className="space-y-6 max-w-4xl">
+                            <form onSubmit={handleAddClass} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                                <h3 className="font-bold text-slate-900 text-sm border-b pb-2">Tambah Rombel / Kelas Baru</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Kode Kelas (ID):</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="e.g. 7B"
+                                            value={newClass.id}
+                                            onChange={e => setNewClass({ ...newClass, id: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Rombel Lengkap:</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="e.g. Kelas VII-B"
+                                            value={newClass.name}
+                                            onChange={e => setNewClass({ ...newClass, name: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Tingkat / Angkatan:</label>
+                                        <select 
+                                            value={newClass.level}
+                                            onChange={e => setNewClass({ ...newClass, level: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        >
+                                            <option value="VII">VII (Tujuh)</option>
+                                            <option value="VIII">VIII (Delapan)</option>
+                                            <option value="IX">IX (Sembilan)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Ruangan / Lab:</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="e.g. Lab Komputer 1"
+                                            value={newClass.room}
+                                            onChange={e => setNewClass({ ...newClass, room: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Wali Kelas:</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="e.g. Dra. Hj. Siti Aminah"
+                                            value={newClass.homeroom}
+                                            onChange={e => setNewClass({ ...newClass, homeroom: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        />
+                                    </div>
+                                    <div className="flex items-end">
+                                        <button type="submit" className="w-full py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
+                                            <Icon name="plus" className="w-4 h-4" />
+                                            <span>Simpan Rombel</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                                <div className="p-4 border-b bg-slate-50/50">
+                                    <h3 className="font-bold text-slate-900 text-sm">Daftar Rombel / Kelas Aktif</h3>
+                                </div>
+                                <table className="w-full text-left border-collapse text-xs">
+                                    <thead>
+                                        <tr className="bg-slate-100 text-slate-800 font-bold uppercase">
+                                            <th className="py-3 px-4">Kode ID</th>
+                                            <th className="py-3 px-4">Nama Rombel</th>
+                                            <th className="py-3 px-3">Tingkat</th>
+                                            <th className="py-3 px-3">Ruangan</th>
+                                            <th className="py-3 px-3">Wali Kelas</th>
+                                            <th className="py-3 px-4 text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {myClasses.map(c => (
+                                            <tr key={c.id} className="hover:bg-slate-50">
+                                                <td className="py-3 px-4 font-mono font-bold text-slate-900">{c.id}</td>
+                                                <td className="py-3 px-4 font-bold text-slate-900">{c.name}</td>
+                                                <td className="py-3 px-3 font-bold text-sky-700">{c.level}</td>
+                                                <td className="py-3 px-3 text-slate-700">{c.room}</td>
+                                                <td className="py-3 px-3 text-slate-700">{c.homeroom || '-'}</td>
+                                                <td className="py-3 px-4 text-center">
+                                                    <button onClick={() => handleDeleteClass(c.id)} className="text-rose-600 hover:text-rose-800 font-bold text-xs">
+                                                        Hapus Rombel
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {subTab === 'academic' && (
+                        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 max-w-2xl">
+                            <h3 className="font-bold text-slate-900 text-sm border-b pb-2">Konfigurasi Bobot Penilaian</h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Bobot Asesmen Formatif / TP (%):</label>
+                                    <input 
+                                        type="number" 
+                                        value={settings.weights.formative}
+                                        onChange={e => setSettings({ ...settings, weights: { ...settings.weights, formative: parseInt(e.target.value) || 0 } })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Bobot Praktikum Lab (%):</label>
+                                    <input 
+                                        type="number" 
+                                        value={settings.weights.practical}
+                                        onChange={e => setSettings({ ...settings, weights: { ...settings.weights, practical: parseInt(e.target.value) || 0 } })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Bobot Sumatif PAS (%):</label>
+                                    <input 
+                                        type="number" 
+                                        value={settings.weights.pas}
+                                        onChange={e => setSettings({ ...settings, weights: { ...settings.weights, pas: parseInt(e.target.value) || 0 } })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {subTab === 'tps' && (
+                        <div className="space-y-6 max-w-4xl">
+                            <form onSubmit={handleAddTp} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                                <h3 className="font-bold text-slate-900 text-sm border-b pb-2">Tambah Tujuan Pembelajaran (TP) Baru</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Kode TP:</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="e.g. TP 5.1"
+                                            value={newTp.code}
+                                            onChange={e => setNewTp({ ...newTp, code: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        />
+                                    </div>
+                                    <div className="sm:col-span-2">
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Deskripsi Ruang Lingkup Materi:</label>
+                                        <div className="flex gap-2">
+                                            <input 
+                                                type="text" 
+                                                placeholder="e.g. Konsep Dasar Cyber Security & Privasi Data"
+                                                value={newTp.name}
+                                                onChange={e => setNewTp({ ...newTp, name: e.target.value })}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                            />
+                                            <button type="submit" className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 whitespace-nowrap shadow-sm">
+                                                <Icon name="plus" className="w-4 h-4" />
+                                                <span>Tambah TP</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                                <div className="p-4 border-b bg-slate-50/50">
+                                    <h3 className="font-bold text-slate-900 text-sm">Daftar Tujuan Pembelajaran Aktif</h3>
+                                </div>
+                                <table className="w-full text-left border-collapse text-xs">
+                                    <thead>
+                                        <tr className="bg-slate-100 text-slate-800 font-bold uppercase">
+                                            <th className="py-3 px-4">Kode TP</th>
+                                            <th className="py-3 px-4">Ruang Lingkup Materi / TP</th>
+                                            <th className="py-3 px-4 text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {tps.map(tp => (
+                                            <tr key={tp.id} className="hover:bg-slate-50">
+                                                <td className="py-3 px-4 font-mono font-bold text-sky-800">{tp.code}</td>
+                                                <td className="py-3 px-4 font-bold text-slate-900">{tp.name}</td>
+                                                <td className="py-3 px-4 text-center">
+                                                    <button onClick={() => handleDeleteTp(tp.id)} className="text-rose-600 hover:text-rose-800 font-bold text-xs">
+                                                        Hapus TP
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+            const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+            const [teacher, setTeacher] = useState(() => {
+                const saved = localStorage.getItem('simadrasah_teacher');
+                return saved ? JSON.parse(saved) : {
+                    name: 'Azhary Mardhani, S.Kom.',
+                    nip: '19880512 201503 1 002',
+                    subject: 'Informatika',
+                    school: 'MTs Negeri 1 Jakarta',
+                    phone: ''
+                };
+            });
+
+            const [settings, setSettings] = useState(() => {
+                const saved = localStorage.getItem('simadrasah_settings');
+                return saved ? JSON.parse(saved) : {
+                    weights: { formative: 30, practical: 40, pas: 30 }
+                };
+            });
+
+            const [activeYear, setActiveYear] = useState('2026/2027');
+            const [activeSemester, setActiveSemester] = useState('Ganjil');
+
+            const [myClasses, setMyClasses] = useState(() => {
+                const saved = localStorage.getItem('simadrasah_classes');
+                return saved ? JSON.parse(saved) : INITIAL_CLASSES;
+            });
+
+            const [selectedClass, setSelectedClass] = useState('8A');
+
+            const [tps, setTps] = useState(() => {
+                const saved = localStorage.getItem('simadrasah_tps');
+                return saved ? JSON.parse(saved) : INITIAL_TPS;
+            });
+
+            const [students, setStudents] = useState(() => {
+                const saved = localStorage.getItem('simadrasah_students');
+                return saved ? JSON.parse(saved) : INITIAL_STUDENTS;
+            });
+
+            const [scores, setScores] = useState(() => {
+                const saved = localStorage.getItem('simadrasah_scores');
+                return saved ? JSON.parse(saved) : INITIAL_SCORES;
+            });
+
+            const [attendance, setAttendance] = useState(() => {
+                const saved = localStorage.getItem('simadrasah_attendance');
+                return saved ? JSON.parse(saved) : INITIAL_ATTENDANCE;
+            });
+
+            const [pcData, setPcData] = useState(() => {
+                const saved = localStorage.getItem('simadrasah_pcdata');
+                return saved ? JSON.parse(saved) : {};
+            });
+
+            const [toasts, setToasts] = useState([]);
+            const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
+
+            const [isCloudReady, setIsCloudReady] = useState(false);
+            const [user, setUser] = useState(null);
+            const [syncStatus, setSyncStatus] = useState('Cloud Ready');
+
+            const saveTimeoutRef = useRef(null);
+
+            const showToast = useCallback((message, type = 'success') => {
+                const id = Date.now();
+                setToasts(prev => [...prev, { id, message, type }]);
+                setTimeout(() => {
+                    setToasts(prev => prev.filter(t => t.id !== id));
+                }, 3500);
+            }, []);
+
+            const triggerConfirm = useCallback((title, message, onConfirm) => {
+                setConfirmModal({
+                    isOpen: true,
+                    title,
+                    message,
+                    onConfirm: () => {
+                        onConfirm();
+                        setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null });
+                    }
+                });
+            }, []);
+
+            const saveToCloud = useCallback(async (dataToSync) => {
+                if (!window.FirebaseCloud || !user || !isCloudReady) return;
+                try {
+                    setSyncStatus('Saving...');
+                    const { db, doc, setDoc, appId } = window.FirebaseCloud;
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'simadrasah', 'main_data');
+                    await setDoc(docRef, { ...dataToSync, lastUpdated: new Date().toISOString() }, { merge: true });
+                    setSyncStatus('Synced');
+                } catch (err) {
+                    console.warn("Cloud Save warning (permission/network):", err.message || err);
+                    setSyncStatus('Local Only');
+                }
+            }, [user, isCloudReady]);
+
+            useEffect(() => {
+                if (window.FirebaseCloud) {
+                    const { auth, signInAnonymously, signInWithCustomToken, onSnapshot, doc, db, appId } = window.FirebaseCloud;
+                    
+                    const authenticate = async () => {
+                        try {
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                return await signInWithCustomToken(auth, __initial_auth_token);
+                            } else {
+                                return await signInAnonymously(auth);
+                            }
+                        } catch (e) {
+                            return await signInAnonymously(auth);
+                        }
+                    };
+
+                    authenticate().then(res => {
+                        setUser(res.user);
+                        setIsCloudReady(true);
+                        setSyncStatus('Cloud Ready');
+                        
+                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'simadrasah', 'main_data');
+                        onSnapshot(docRef, 
+                            (snapshot) => {
+                                if (snapshot.exists()) {
+                                    const cData = snapshot.data();
+                                    if (cData.teacher) setTeacher(cData.teacher);
+                                    if (cData.settings) setSettings(cData.settings);
+                                    if (cData.myClasses) setMyClasses(cData.myClasses);
+                                    if (cData.tps) setTps(cData.tps);
+                                    if (cData.students) setStudents(cData.students);
+                                    if (cData.scores) setScores(cData.scores);
+                                    if (cData.attendance) setAttendance(cData.attendance);
+                                    if (cData.pcData) setPcData(cData.pcData);
+                                    setSyncStatus('Synced');
+                                }
+                            },
+                            (error) => {
+                                console.warn("Firestore snapshot listener permission error, fallback to Local Mode:", error.message);
+                                setIsCloudReady(false);
+                                setSyncStatus('Local Only');
+                            }
+                        );
+                    }).catch((err) => {
+                        console.warn("Cloud connection error, fallback to Local Mode:", err.message);
+                        setIsCloudReady(false);
+                        setSyncStatus('Local Only');
+                    });
+                } else {
+                    setSyncStatus('Local Only');
+                }
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('simadrasah_teacher', JSON.stringify(teacher));
+                localStorage.setItem('simadrasah_settings', JSON.stringify(settings));
+                localStorage.setItem('simadrasah_classes', JSON.stringify(myClasses));
+                localStorage.setItem('simadrasah_tps', JSON.stringify(tps));
+                localStorage.setItem('simadrasah_students', JSON.stringify(students));
+                localStorage.setItem('simadrasah_scores', JSON.stringify(scores));
+                localStorage.setItem('simadrasah_attendance', JSON.stringify(attendance));
+                localStorage.setItem('simadrasah_pcdata', JSON.stringify(pcData));
+
+                if (isCloudReady && user) {
+                    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+                    saveTimeoutRef.current = setTimeout(() => {
+                        saveToCloud({ teacher, settings, myClasses, tps, students, scores, attendance, pcData });
+                    }, 1500);
+                }
+            }, [teacher, settings, myClasses, tps, students, scores, attendance, pcData, isCloudReady, user, saveToCloud]);
+
+            const navItems = [
+                { id: 'dashboard', label: 'Dashboard Utama', icon: 'dashboard' },
+                { id: 'absensi', label: 'Presensi Lab Komputer', icon: 'attendance' },
+                { id: 'pc_lab', label: 'Denah & PC Client Lab', icon: 'pc' },
+                { id: 'penilaian', label: 'Input Nilai Grid', icon: 'grading' },
+                { id: 'rekap', label: 'Rekap Leger Nilai', icon: 'recap' },
+                { id: 'rdm', label: 'Ekspor RDM Rapor', icon: 'rdm' },
+                { id: 'klasemen', label: 'Klasemen & Juara', icon: 'klasemen' },
+                { id: 'siswa', label: 'Kelola Siswa', icon: 'students' },
+                { id: 'pengaturan', label: 'Pengaturan System', icon: 'settings' }
+            ];
+
+            return (
+                <div className="min-h-screen flex bg-slate-50">
+                    <aside className={`fixed lg:static inset-y-0 left-0 z-40 bg-slate-900 text-white transition-all duration-300 flex flex-col justify-between ${
+                        isSidebarCollapsed ? 'w-20' : 'w-64'
+                    } ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+                        <div className="p-4 flex items-center justify-between border-b border-slate-800">
+                            {!isSidebarCollapsed && (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded-xl bg-sky-500 flex items-center justify-center font-black text-white text-sm">
+                                        M
+                                    </div>
+                                    <span className="font-extrabold text-sm tracking-tight text-white">SIMADRASAH</span>
+                                </div>
+                            )}
+                            <button 
+                                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition hidden lg:block"
+                            >
+                                <Icon name={isSidebarCollapsed ? "chevronRight" : "chevronLeft"} className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
+                            {navItems.map(item => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => {
+                                        setActiveTab(item.id);
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl font-bold text-xs transition ${
+                                        activeTab === item.id 
+                                            ? 'bg-sky-600 text-white shadow-md' 
+                                            : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+                                    }`}
+                                    title={isSidebarCollapsed ? item.label : ''}
+                                >
+                                    <Icon name={item.icon} className="w-5 h-5 shrink-0" />
+                                    {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
+                                </button>
+                            ))}
+                        </nav>
+
+                        <div className="p-4 border-t border-slate-800">
+                            {!isSidebarCollapsed ? (
+                                <div className="text-xs space-y-1">
+                                    <p className="font-bold text-slate-200 truncate">{teacher.name}</p>
+                                    <p className="text-[10px] text-slate-400 truncate">{teacher.school}</p>
+                                    <div className="pt-2 flex items-center gap-1.5 text-[10px] text-emerald-400">
+                                        <Icon name="cloud" className="w-3.5 h-3.5" />
+                                        <span>{syncStatus}</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex justify-center text-emerald-400">
+                                    <Icon name="cloud" className="w-5 h-5" />
+                                </div>
+                            )}
+                        </div>
+                    </aside>
+
+                    <div className="flex-1 flex flex-col min-w-0">
+                        <header className="bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-30">
+                            <div className="flex items-center gap-3">
+                                <button 
+                                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                                    className="p-2 text-slate-600 rounded-xl hover:bg-slate-100 lg:hidden"
+                                >
+                                    <Icon name="menu" className="w-6 h-6" />
+                                </button>
+                                <h1 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
+                                    {navItems.find(n => n.id === activeTab)?.label}
+                                </h1>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <span className="px-3 py-1 bg-sky-50 text-sky-800 border border-sky-200 rounded-full text-xs font-bold">
+                                    {activeYear} ({activeSemester})
+                                </span>
+                            </div>
+                        </header>
+
+                        <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">
+                            {activeTab === 'dashboard' && (
+                                <DashboardTab students={students} myClasses={myClasses} teacher={teacher} activeYear={activeYear} activeSemester={activeSemester} setActiveTab={setActiveTab} />
+                            )}
+                            {activeTab === 'absensi' && (
+                                <AttendanceTab students={students} attendance={attendance} setAttendance={setAttendance} myClasses={myClasses} selectedClass={selectedClass} setSelectedClass={setSelectedClass} showToast={showToast} />
+                            )}
+                            {activeTab === 'pc_lab' && (
+                                <PcLabTab students={students} pcData={pcData} setPcData={setPcData} myClasses={myClasses} selectedClass={selectedClass} setSelectedClass={setSelectedClass} attendance={attendance} showToast={showToast} />
+                            )}
+                            {activeTab === 'penilaian' && (
+                                <GradingTab students={students} scores={scores} setScores={setScores} myClasses={myClasses} selectedClass={selectedClass} setSelectedClass={setSelectedClass} tps={tps} settings={settings} showToast={showToast} />
+                            )}
+                            {activeTab === 'rekap' && (
+                                <RecapTab students={students} scores={scores} myClasses={myClasses} tps={tps} settings={settings} teacher={teacher} activeYear={activeYear} activeSemester={activeSemester} showToast={showToast} />
+                            )}
+                            {activeTab === 'rdm' && (
+                                <RdmExportTab students={students} scores={scores} attendance={attendance} myClasses={myClasses} tps={tps} settings={settings} teacher={teacher} activeYear={activeYear} activeSemester={activeSemester} showToast={showToast} />
+                            )}
+                            {activeTab === 'klasemen' && (
+                                <KlasemenTab students={students} scores={scores} myClasses={myClasses} tps={tps} settings={settings} />
+                            )}
+                            {activeTab === 'siswa' && (
+                                <StudentManagementTab students={students} setStudents={setStudents} setScores={setScores} setAttendance={setAttendance} myClasses={myClasses} selectedClass={selectedClass} setSelectedClass={setSelectedClass} showToast={showToast} triggerConfirm={triggerConfirm} />
+                            )}
+                            {activeTab === 'pengaturan' && (
+                                <SettingsTab settings={settings} setSettings={setSettings} teacher={teacher} setTeacher={setTeacher} myClasses={myClasses} setMyClasses={setMyClasses} tps={tps} setTps={setTps} students={students} setStudents={setStudents} setScores={setScores} setAttendance={setAttendance} syncStatus={syncStatus} showToast={showToast} triggerConfirm={triggerConfirm} />
+                            )}
+                        </main>
+                    </div>
+
+                    <ConfirmationModal 
+                        isOpen={confirmModal.isOpen}
+                        title={confirmModal.title}
+                        message={confirmModal.message}
+                        onConfirm={confirmModal.onConfirm}
+                        onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                    />
+                    <ToastContainer toasts={toasts} />
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
