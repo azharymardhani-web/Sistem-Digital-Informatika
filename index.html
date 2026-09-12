@@ -66,23 +66,6 @@
             background: #94a3b8;
         }
 
-        @media print {
-            .no-print {
-                display: none !important;
-            }
-            .print-only {
-                display: block !important;
-            }
-            body {
-                background: white;
-                color: black;
-            }
-        }
-
-        .print-only {
-            display: none;
-        }
-
         .drag-over {
             border-color: #0284c7 !important;
             background-color: #e0f2fe !important;
@@ -99,15 +82,14 @@
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'simadrasah-app';
         
-        // KREDENSIAL FIREBASE PROYEK INFORMATICA-CLASS
         const firebaseConfig = {
-  apiKey: "AIzaSyA3v19W60OQ5qfKYELEvmmkKaO-Gf6zHgs",
-  authDomain: "informatica-class.firebaseapp.com",
-  projectId: "informatica-class",
-  storageBucket: "informatica-class.firebasestorage.app",
-  messagingSenderId: "352869091816",
-  appId: "1:352869091816:web:db2b72fca4d97c142bbc5d",
-  measurementId: "G-PX38SBS7VS"
+            apiKey: "AIzaSyA3v19W60OQ5qfKYELEvmmkKaO-Gf6zHgs",
+            authDomain: "informatica-class.firebaseapp.com",
+            projectId: "informatica-class",
+            storageBucket: "informatica-class.firebasestorage.app",
+            messagingSenderId: "352869091816",
+            appId: "1:352869091816:web:63927391e58ece712bbc5d",
+            measurementId: "G-YCBJP7YFQF"
         };
 
         try {
@@ -138,6 +120,16 @@
 
     <script type="text/babel">
         const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+        // Helper function for PDF export initialization
+        function getPdfConstructor() {
+            if (window.jspdf && window.jspdf.jsPDF) {
+                return window.jspdf.jsPDF;
+            } else if (typeof window.jsPDF === 'function') {
+                return window.jsPDF;
+            }
+            return null;
+        }
 
         function Icon({ name, className = "w-5 h-5" }) {
             switch (name) {
@@ -244,11 +236,11 @@
         };
 
         function calculateInformaticsScore(studentId, classId, scores, tps, weights) {
-            const stScores = (scores[classId] && scores[classId][studentId]) || {};
+            const stScores = (scores && scores[classId] && scores[classId][studentId]) || {};
             
             let tpSum = 0;
             let tpCount = 0;
-            tps.forEach(tp => {
+            (tps || []).forEach(tp => {
                 const val = parseFloat(stScores[tp.id]);
                 if (!isNaN(val)) {
                     tpSum += val;
@@ -260,9 +252,9 @@
             const practicalScore = parseFloat(stScores.practical) || 0;
             const pasScore = parseFloat(stScores.pas) || 0;
 
-            const wFormative = (weights.formative || 30) / 100;
-            const wPractical = (weights.practical || 40) / 100;
-            const wPas = (weights.pas || 30) / 100;
+            const wFormative = ((weights && weights.formative) || 30) / 100;
+            const wPractical = ((weights && weights.practical) || 40) / 100;
+            const wPas = ((weights && weights.pas) || 30) / 100;
 
             const finalScore = Math.round((avgFormative * wFormative) + (practicalScore * wPractical) + (pasScore * wPas));
 
@@ -285,8 +277,10 @@
             if (res.descManual && res.descManual.trim() !== '') return res.descManual;
             if (res.finalScore === 0) return "Belum ada catatan nilai evaluasi semester.";
 
+            const firstTpName = (tps && tps[0]) ? tps[0].name : 'materi pokok';
+
             if (res.predicate === 'A') {
-                return `Menunjukkan penguasaan yang SANGAT BAIK dalam seluruh Capaian Pembelajaran Informatika, terutama pada pemahaman ${tps[0]?.name || 'materi pokok'} dan praktikum lab.`;
+                return `Menunjukkan penguasaan yang SANGAT BAIK dalam seluruh Capaian Pembelajaran Informatika, terutama pada pemahaman ${firstTpName} dan praktikum lab.`;
             } else if (res.predicate === 'B') {
                 return `Menunjukkan penguasaan yang BAIK dalam mempraktikkan tugas informatika dan memahami logika komputasi. Perlu peningkatan pada konsistensi latihan.`;
             } else if (res.predicate === 'C') {
@@ -311,7 +305,7 @@
         function ToastContainer({ toasts }) {
             return (
                 <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none">
-                    {toasts.map(t => (
+                    {(toasts || []).map(t => (
                         <div 
                             key={t.id} 
                             className={`pointer-events-auto px-4 py-3 rounded-xl shadow-lg font-semibold text-xs transition transform translate-y-0 flex items-center gap-2 ${
@@ -353,8 +347,8 @@
         }
 
         function DashboardTab({ students, myClasses, teacher, activeYear, activeSemester, setActiveTab }) {
-            const totalStudents = students.length;
-            const totalClasses = myClasses.length;
+            const totalStudents = (students || []).length;
+            const totalClasses = (myClasses || []).length;
 
             return (
                 <div className="space-y-6">
@@ -430,8 +424,8 @@
                     <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm space-y-4">
                         <h3 className="font-bold text-slate-900 text-sm">Daftar Rombel & Lab Komputer</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {myClasses.map(c => {
-                                const stCount = students.filter(s => s.classId === c.id).length;
+                            {(myClasses || []).map(c => {
+                                const stCount = (students || []).filter(s => s.classId === c.id).length;
                                 return (
                                     <div key={c.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 space-y-2">
                                         <div className="flex items-center justify-between">
@@ -457,13 +451,13 @@
             const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
             const [subTab, setSubTab] = useState('input');
 
-            const classStudents = useMemo(() => students.filter(s => s.classId === selectedClass), [students, selectedClass]);
+            const classStudents = useMemo(() => (students || []).filter(s => s.classId === selectedClass), [students, selectedClass]);
             const attKey = `${attendanceDate}_${selectedClass}`;
-            const currentAtt = attendance[attKey] || {};
+            const currentAtt = (attendance && attendance[attKey]) || {};
 
             const handleStatusChange = (studentId, status) => {
                 setAttendance(prev => {
-                    const updated = { ...prev };
+                    const updated = { ...(prev || {}) };
                     if (!updated[attKey]) updated[attKey] = {};
                     updated[attKey][studentId] = status;
                     return updated;
@@ -472,7 +466,7 @@
 
             const handleMarkAllHadir = () => {
                 setAttendance(prev => {
-                    const updated = { ...prev };
+                    const updated = { ...(prev || {}) };
                     if (!updated[attKey]) updated[attKey] = {};
                     classStudents.forEach(s => {
                         updated[attKey][s.id] = 'H';
@@ -483,7 +477,7 @@
             };
 
             const attendanceDatesForClass = useMemo(() => {
-                const dates = Object.keys(attendance)
+                const dates = Object.keys(attendance || {})
                     .filter(k => k.endsWith(`_${selectedClass}`))
                     .map(k => k.replace(`_${selectedClass}`, ''))
                     .sort();
@@ -491,8 +485,13 @@
             }, [attendance, selectedClass, attendanceDate]);
 
             const exportAttendancePDF = () => {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({ orientation: 'landscape' });
+                const jsPdfClass = getPdfConstructor();
+                if (!jsPdfClass) {
+                    showToast("Library jsPDF belum siap. Coba lagi dalam beberapa detik.", "error");
+                    return;
+                }
+                
+                const doc = new jsPdfClass({ orientation: 'landscape' });
                 
                 doc.setFontSize(14);
                 doc.text("REKAPITULASI PRESENSI MINGGUAN INFORMATIKA", 14, 15);
@@ -516,14 +515,16 @@
                     return [st.nisn, st.name, st.gender, ...attRow, h, s, i, a, `${pct}%`];
                 });
 
-                doc.autoTable({
-                    startY: 28,
-                    head: [tableHeaders],
-                    body: tableData,
-                    theme: 'grid',
-                    headStyles: { fillColor: [2, 132, 199] },
-                    styles: { fontSize: 8 }
-                });
+                if (doc.autoTable) {
+                    doc.autoTable({
+                        startY: 28,
+                        head: [tableHeaders],
+                        body: tableData,
+                        theme: 'grid',
+                        headStyles: { fillColor: [2, 132, 199] },
+                        styles: { fontSize: 8 }
+                    });
+                }
 
                 doc.save(`Rekap_Presensi_Informatika_${selectedClass}.pdf`);
                 showToast(`File PDF Presensi ${selectedClass} berhasil diunduh!`);
@@ -540,7 +541,7 @@
                                     onChange={e => setSelectedClass(e.target.value)}
                                     className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
                                 >
-                                    {myClasses.map(c => (
+                                    {(myClasses || []).map(c => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                 </select>
@@ -728,18 +729,16 @@
             const [selectedPc, setSelectedPc] = useState(null);
             const [pcModalOpen, setPcModalOpen] = useState(false);
             const [pcForm, setPcForm] = useState({ studentId: '', condition: 'normal', notes: '' });
-            const [draggedStudentId, setDraggedStudentId] = useState(null);
-            const [draggedPcSource, setDraggedPcSource] = useState(null);
 
-            const classStudents = useMemo(() => students.filter(s => s.classId === selectedClass), [students, selectedClass]);
-            const currentClassPc = pcData[selectedClass] || {};
+            const classStudents = useMemo(() => (students || []).filter(s => s.classId === selectedClass), [students, selectedClass]);
+            const currentClassPc = (pcData && pcData[selectedClass]) || {};
 
             const pcList = useMemo(() => {
                 const list = [];
                 for (let i = 1; i <= TOTAL_PCS; i++) {
                     const pcNum = `PC-${i < 10 ? '0' + i : i}`;
                     const assign = currentClassPc[pcNum] || { studentId: '', condition: 'normal', notes: '' };
-                    const student = students.find(s => s.id === assign.studentId);
+                    const student = (students || []).find(s => s.id === assign.studentId);
                     list.push({ pcNum, ...assign, student });
                 }
                 return list;
@@ -753,9 +752,14 @@
             const gridRows = useMemo(() => {
                 const rows = [];
                 for (let r = 0; r < 4; r++) {
+                    let items = pcList.slice(r * 8, (r + 1) * 8);
+                    if (r % 2 === 0) {
+                        items = [...items].reverse();
+                    }
                     rows.push({
                         rowNum: r + 1,
-                        items: pcList.slice(r * 8, (r + 1) * 8)
+                        dirText: r % 2 === 0 ? '◀ Kanan ke Kiri (Zigzag)' : '▶ Kiri ke Kanan (Zigzag)',
+                        items: items
                     });
                 }
                 return rows;
@@ -773,7 +777,7 @@
 
             const handleAutoPlot = () => {
                 setPcData(prev => {
-                    const updated = { ...prev };
+                    const updated = { ...(prev || {}) };
                     if (!updated[selectedClass]) updated[selectedClass] = {};
                     
                     classStudents.forEach((st, idx) => {
@@ -790,12 +794,12 @@
                     });
                     return updated;
                 });
-                showToast(`Auto-plotting ${Math.min(classStudents.length, TOTAL_PCS)} siswa kelas ${selectedClass} ke PC-01 s/d PC-${Math.min(classStudents.length, TOTAL_PCS)} berhasil!`);
+                showToast(`Auto-plotting ${Math.min(classStudents.length, TOTAL_PCS)} siswa kelas ${selectedClass} berhasil!`);
             };
 
             const handleResetPlot = () => {
                 setPcData(prev => {
-                    const updated = { ...prev };
+                    const updated = { ...(prev || {}) };
                     updated[selectedClass] = {};
                     return updated;
                 });
@@ -815,7 +819,7 @@
             const savePcEdit = (e) => {
                 e.preventDefault();
                 setPcData(prev => {
-                    const updated = { ...prev };
+                    const updated = { ...(prev || {}) };
                     if (!updated[selectedClass]) updated[selectedClass] = {};
                     updated[selectedClass][selectedPc] = { ...pcForm };
                     return updated;
@@ -824,16 +828,11 @@
                 showToast(`Pengaturan Komputer ${selectedPc} berhasil diperbarui!`);
             };
 
-            // Drag and Drop Logic
             const handleDragStartStudent = (e, stId) => {
-                setDraggedStudentId(stId);
-                setDraggedPcSource(null);
                 e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'student', studentId: stId }));
             };
 
             const handleDragStartPc = (e, pcNum) => {
-                setDraggedStudentId(null);
-                setDraggedPcSource(pcNum);
                 e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'pc', pcNum }));
             };
 
@@ -855,18 +854,16 @@
                 try {
                     const data = JSON.parse(rawData);
                     setPcData(prev => {
-                        const updated = { ...prev };
+                        const updated = { ...(prev || {}) };
                         if (!updated[selectedClass]) updated[selectedClass] = {};
 
                         if (data.type === 'student') {
                             const stId = data.studentId;
-                            // Remove student from any previous PC in this class
                             Object.keys(updated[selectedClass]).forEach(pKey => {
                                 if (updated[selectedClass][pKey].studentId === stId) {
                                     updated[selectedClass][pKey] = { ...updated[selectedClass][pKey], studentId: '' };
                                 }
                             });
-                            // Assign to target PC
                             const prevTarget = updated[selectedClass][targetPcNum] || { condition: 'normal', notes: '' };
                             updated[selectedClass][targetPcNum] = { ...prevTarget, studentId: stId };
                         } else if (data.type === 'pc') {
@@ -883,9 +880,7 @@
                         return updated;
                     });
                     showToast(`Posisi Komputer ${targetPcNum} berhasil disesuaikan!`);
-                } catch (err) {
-                    console.error("Drop Parse Error", err);
-                }
+                } catch (err) {}
             };
 
             const handleDropOnTrash = (e) => {
@@ -897,7 +892,7 @@
                     const data = JSON.parse(rawData);
                     if (data.type === 'pc') {
                         setPcData(prev => {
-                            const updated = { ...prev };
+                            const updated = { ...(prev || {}) };
                             if (updated[selectedClass] && updated[selectedClass][data.pcNum]) {
                                 updated[selectedClass][data.pcNum] = { ...updated[selectedClass][data.pcNum], studentId: '' };
                             }
@@ -909,8 +904,13 @@
             };
 
             const exportPcPDF = () => {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({ orientation: 'landscape' });
+                const jsPdfClass = getPdfConstructor();
+                if (!jsPdfClass) {
+                    showToast("Library jsPDF belum siap. Coba lagi dalam beberapa detik.", "error");
+                    return;
+                }
+
+                const doc = new jsPdfClass({ orientation: 'landscape' });
 
                 doc.setFontSize(14);
                 doc.text("DENAH POSISI KOMPUTER CLIENT SISWA (LAB KOMPUTER)", 14, 15);
@@ -927,14 +927,16 @@
                     pc.notes || '-'
                 ]);
 
-                doc.autoTable({
-                    startY: 28,
-                    head: [headCols],
-                    body: bodyRows,
-                    theme: 'grid',
-                    headStyles: { fillColor: [2, 132, 199] },
-                    styles: { fontSize: 8 }
-                });
+                if (doc.autoTable) {
+                    doc.autoTable({
+                        startY: 28,
+                        head: [headCols],
+                        body: bodyRows,
+                        theme: 'grid',
+                        headStyles: { fillColor: [2, 132, 199] },
+                        styles: { fontSize: 8 }
+                    });
+                }
 
                 doc.save(`Denah_Lab_Komputer_${selectedClass}.pdf`);
                 showToast(`PDF Denah Komputer Lab (${selectedClass}) berhasil diunduh!`);
@@ -951,7 +953,7 @@
                                     onChange={e => setSelectedClass(e.target.value)}
                                     className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
                                 >
-                                    {myClasses.map(c => (
+                                    {(myClasses || []).map(c => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                 </select>
@@ -962,7 +964,6 @@
                             <button 
                                 onClick={handleAutoPlot}
                                 className="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
-                                title="Plotting otomatis berdasarkan urutan daftar siswa"
                             >
                                 <Icon name="check" className="w-4 h-4" />
                                 <span>⚡ Auto-Plot Urut Absen</span>
@@ -1029,7 +1030,6 @@
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        {/* Interactive Drag Pool Sidebar */}
                         <div className="space-y-4">
                             <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
                                 <h4 className="font-extrabold text-slate-900 text-xs flex items-center gap-1.5">
@@ -1062,7 +1062,6 @@
                                 </div>
                             </div>
 
-                            {/* Drop Trash Zone */}
                             <div 
                                 onDragOver={handleDragOver}
                                 onDragLeave={handleDragLeave}
@@ -1075,36 +1074,26 @@
                             </div>
                         </div>
 
-                        {/* Denah Grid Main Area */}
                         <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
                             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
                                 <div>
                                     <h3 className="font-extrabold text-slate-900 text-sm">Tata Letak Lab Komputer (PC-01 s/d PC-32)</h3>
-                                    <p className="text-xs text-slate-500">Grid 8 × 4. Klik kartu untuk edit rincian atau seret (drag & drop) untuk menukar tempat.</p>
-                                </div>
-                                
-                                <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-600">
-                                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Normal & Terisi</span>
-                                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-slate-300 inline-block"></span> PC Kosong</span>
-                                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500 inline-block"></span> Perlu Perbaikan</span>
-                                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-rose-500 inline-block"></span> Rusak / Non-aktif</span>
+                                    <p className="text-xs text-slate-500">Grid 8 × 4 (Polas Zigzag Mengular). Klik untuk edit / seret untuk menukar tempat.</p>
                                 </div>
                             </div>
 
-                            {/* Front Screen Board */}
                             <div className="w-full py-2 bg-slate-900 text-white text-center font-extrabold text-xs rounded-xl shadow-sm tracking-widest uppercase flex items-center justify-center gap-2 border-2 border-slate-700">
                                 <span>📺</span>
                                 <span>DEPAN LAB KOMPUTER / PAPAN TULIS & PROYEKTOR</span>
                                 <span>📺</span>
                             </div>
 
-                            {/* 8x4 Grid Render */}
                             <div className="space-y-4 pt-2">
                                 {gridRows.map((row) => (
                                     <div key={row.rowNum} className="space-y-2 bg-slate-50/60 p-3 rounded-2xl border border-slate-200/80">
                                         <div className="flex items-center justify-between px-1 text-[11px] font-extrabold text-slate-700">
                                             <span className="bg-sky-100 text-sky-900 px-2.5 py-0.5 rounded-full border border-sky-300">
-                                                Baris {row.rowNum}
+                                                Baris {row.rowNum} ({row.dirText})
                                             </span>
                                             <span className="text-slate-400 font-mono text-[10px]">
                                                 8 Unit PC Per Baris
@@ -1220,7 +1209,7 @@
                                             rows="2"
                                             value={pcForm.notes}
                                             onChange={e => setPcForm({ ...pcForm, notes: e.target.value })}
-                                            placeholder="e.g. Mouse klik kanan tidak berfungsi, keyboard tombol Space agak keras"
+                                            placeholder="e.g. Mouse klik kanan tidak berfungsi"
                                             className="w-full p-2 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none resize-none"
                                         />
                                     </div>
@@ -1249,11 +1238,11 @@
         }
 
         function GradingTab({ students, scores, setScores, myClasses, selectedClass, setSelectedClass, tps, settings, showToast }) {
-            const classStudents = useMemo(() => students.filter(s => s.classId === selectedClass), [students, selectedClass]);
+            const classStudents = useMemo(() => (students || []).filter(s => s.classId === selectedClass), [students, selectedClass]);
 
             const handleScoreChange = (studentId, field, value) => {
                 setScores(prev => {
-                    const updated = { ...prev };
+                    const updated = { ...(prev || {}) };
                     if (!updated[selectedClass]) updated[selectedClass] = {};
                     if (!updated[selectedClass][studentId]) updated[selectedClass][studentId] = {};
                     updated[selectedClass][studentId][field] = value;
@@ -1263,7 +1252,7 @@
 
             const handleResetDesc = (studentId) => {
                 setScores(prev => {
-                    const updated = { ...prev };
+                    const updated = { ...(prev || {}) };
                     if (updated[selectedClass] && updated[selectedClass][studentId]) {
                         updated[selectedClass][studentId].descManual = '';
                     }
@@ -1271,6 +1260,8 @@
                 });
                 showToast('Deskripsi capaian dikembalikan ke generasi otomatis!');
             };
+
+            const weights = (settings && settings.weights) || { formative: 30, practical: 40, pas: 30 };
 
             return (
                 <div className="space-y-6">
@@ -1283,7 +1274,7 @@
                                     onChange={e => setSelectedClass(e.target.value)}
                                     className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
                                 >
-                                    {myClasses.map(c => (
+                                    {(myClasses || []).map(c => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                 </select>
@@ -1292,9 +1283,9 @@
 
                         <div className="text-xs text-slate-700 bg-sky-50 px-3 py-2 rounded-xl border border-sky-200 font-medium">
                             <span>Bobot: </span>
-                            <strong className="text-sky-900">Formatif ({settings.weights.formative}%)</strong> • 
-                            <strong className="text-sky-900"> Praktikum ({settings.weights.practical}%)</strong> • 
-                            <strong className="text-sky-900"> PAS ({settings.weights.pas}%)</strong>
+                            <strong className="text-sky-900">Formatif ({weights.formative}%)</strong> • 
+                            <strong className="text-sky-900"> Praktikum ({weights.practical}%)</strong> • 
+                            <strong className="text-sky-900"> PAS ({weights.pas}%)</strong>
                         </div>
                     </div>
 
@@ -1310,7 +1301,7 @@
                                     <tr className="bg-slate-100 text-slate-800 font-bold uppercase tracking-wider border-b border-slate-200">
                                         <th className="py-3 px-3 min-w-[80px]">No. Absen</th>
                                         <th className="py-3 px-3 min-w-[180px]">Nama Siswa</th>
-                                        {tps.map(tp => (
+                                        {(tps || []).map(tp => (
                                             <th key={tp.id} className="py-3 px-2 text-center min-w-[90px] bg-sky-100/80 text-sky-950 font-extrabold">{tp.code}</th>
                                         ))}
                                         <th className="py-3 px-2 text-center min-w-[100px] bg-emerald-100 text-emerald-950 font-extrabold">Praktikum Lab</th>
@@ -1322,7 +1313,7 @@
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {classStudents.map(st => {
-                                        const res = calculateInformaticsScore(st.id, selectedClass, scores, tps, settings.weights);
+                                        const res = calculateInformaticsScore(st.id, selectedClass, scores, tps, weights);
                                         const autoDesc = generateCapaianDescription(res, tps);
 
                                         return (
@@ -1330,8 +1321,8 @@
                                                 <td className="py-2 px-3 font-mono font-bold text-slate-700">{st.nisn}</td>
                                                 <td className="py-2 px-3 font-bold text-slate-900">{st.name}</td>
                                                 
-                                                {tps.map(tp => {
-                                                    const val = (scores[selectedClass] && scores[selectedClass][st.id]) ? scores[selectedClass][st.id][tp.id] || '' : '';
+                                                {(tps || []).map(tp => {
+                                                    const val = (scores && scores[selectedClass] && scores[selectedClass][st.id]) ? scores[selectedClass][st.id][tp.id] || '' : '';
                                                     return (
                                                         <td key={tp.id} className="py-1 px-1 text-center bg-sky-50/30">
                                                             <input 
@@ -1352,7 +1343,7 @@
                                                         type="number" 
                                                         min="0" 
                                                         max="100" 
-                                                        value={(scores[selectedClass] && scores[selectedClass][st.id]) ? scores[selectedClass][st.id].practical || '' : ''}
+                                                        value={(scores && scores[selectedClass] && scores[selectedClass][st.id]) ? scores[selectedClass][st.id].practical || '' : ''}
                                                         onChange={e => handleScoreChange(st.id, 'practical', e.target.value)}
                                                         className="w-full text-center py-1 px-1 font-bold text-slate-900 bg-white border border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                                                         placeholder="0"
@@ -1364,7 +1355,7 @@
                                                         type="number" 
                                                         min="0" 
                                                         max="100" 
-                                                        value={(scores[selectedClass] && scores[selectedClass][st.id]) ? scores[selectedClass][st.id].pas || '' : ''}
+                                                        value={(scores && scores[selectedClass] && scores[selectedClass][st.id]) ? scores[selectedClass][st.id].pas || '' : ''}
                                                         onChange={e => handleScoreChange(st.id, 'pas', e.target.value)}
                                                         className="w-full text-center py-1 px-1 font-bold text-slate-900 bg-white border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                                                         placeholder="0"
@@ -1417,11 +1408,11 @@
             const [searchQuery, setSearchQuery] = useState('');
 
             const filteredStudents = useMemo(() => {
-                let list = students;
+                let list = students || [];
                 if (filterClass !== 'ALL') {
                     if (filterClass.startsWith('TINGKAT_')) {
                         const lvl = filterClass.replace('TINGKAT_', '');
-                        const classIdsInLvl = myClasses.filter(c => c.level === lvl).map(c => c.id);
+                        const classIdsInLvl = (myClasses || []).filter(c => c.level === lvl).map(c => c.id);
                         list = list.filter(s => classIdsInLvl.includes(s.classId));
                     } else {
                         list = list.filter(s => s.classId === filterClass);
@@ -1429,14 +1420,19 @@
                 }
                 if (searchQuery.trim() !== '') {
                     const q = searchQuery.toLowerCase();
-                    list = list.filter(s => s.name.toLowerCase().includes(q) || s.nisn.toLowerCase().includes(q));
+                    list = list.filter(s => (s.name && s.name.toLowerCase().includes(q)) || (s.nisn && s.nisn.toLowerCase().includes(q)));
                 }
                 return list;
             }, [students, filterClass, searchQuery, myClasses]);
 
             const exportLegerPDF = () => {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({ orientation: 'landscape' });
+                const jsPdfClass = getPdfConstructor();
+                if (!jsPdfClass) {
+                    showToast("Library jsPDF belum siap. Coba lagi dalam beberapa detik.", "error");
+                    return;
+                }
+
+                const doc = new jsPdfClass({ orientation: 'landscape' });
 
                 doc.setFontSize(14);
                 doc.text("LEGER NILAI INFORMATIKA KURIKULUM MERDEKA", 14, 15);
@@ -1450,14 +1446,16 @@
                     return [st.nisn, st.name, st.classId, res.avgFormative, res.practicalScore, res.pasScore, res.finalScore, res.predicate, desc];
                 });
 
-                doc.autoTable({
-                    startY: 28,
-                    head: [headCols],
-                    body: bodyRows,
-                    theme: 'grid',
-                    headStyles: { fillColor: [7, 89, 133] },
-                    styles: { fontSize: 8 }
-                });
+                if (doc.autoTable) {
+                    doc.autoTable({
+                        startY: 28,
+                        head: [headCols],
+                        body: bodyRows,
+                        theme: 'grid',
+                        headStyles: { fillColor: [7, 89, 133] },
+                        styles: { fontSize: 8 }
+                    });
+                }
 
                 doc.save(`Leger_Informatika_${filterClass}.pdf`);
                 showToast(`PDF Leger Nilai (${filterClass}) berhasil diunduh!`);
@@ -1478,7 +1476,7 @@
                                     <option value="TINGKAT_VII">Seluruh Kelas VII</option>
                                     <option value="TINGKAT_VIII">Seluruh Kelas VIII</option>
                                     <option value="TINGKAT_IX">Seluruh Kelas IX</option>
-                                    {myClasses.map(c => (
+                                    {(myClasses || []).map(c => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                 </select>
@@ -1560,11 +1558,11 @@
             const [filterScope, setFilterScope] = useState('ALL');
 
             const filteredStudents = useMemo(() => {
-                let list = students;
+                let list = students || [];
                 if (filterScope !== 'ALL') {
                     if (filterScope.startsWith('TINGKAT_')) {
                         const lvl = filterScope.replace('TINGKAT_', '');
-                        const classIdsInLvl = myClasses.filter(c => c.level === lvl).map(c => c.id);
+                        const classIdsInLvl = (myClasses || []).filter(c => c.level === lvl).map(c => c.id);
                         list = list.filter(s => classIdsInLvl.includes(s.classId));
                     } else {
                         list = list.filter(s => s.classId === filterScope);
@@ -1574,8 +1572,13 @@
             }, [students, filterScope, myClasses]);
 
             const exportCombinedPDF = () => {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({ orientation: 'landscape' });
+                const jsPdfClass = getPdfConstructor();
+                if (!jsPdfClass) {
+                    showToast("Library jsPDF belum siap. Coba lagi dalam beberapa detik.", "error");
+                    return;
+                }
+
+                const doc = new jsPdfClass({ orientation: 'landscape' });
 
                 doc.setFontSize(14);
                 doc.text("DOKUMEN INTEGRASI RAPOR DIGITAL MADRASAH (RDM)", 14, 15);
@@ -1589,14 +1592,16 @@
                     return [st.nisn, st.name, st.classId, res.avgFormative, res.practicalScore, res.pasScore, res.finalScore, res.predicate, desc];
                 });
 
-                doc.autoTable({
-                    startY: 28,
-                    head: [headCols],
-                    body: bodyRows,
-                    theme: 'grid',
-                    headStyles: { fillColor: [12, 74, 110] },
-                    styles: { fontSize: 8 }
-                });
+                if (doc.autoTable) {
+                    doc.autoTable({
+                        startY: 28,
+                        head: [headCols],
+                        body: bodyRows,
+                        theme: 'grid',
+                        headStyles: { fillColor: [12, 74, 110] },
+                        styles: { fontSize: 8 }
+                    });
+                }
 
                 doc.save(`Ekspor_RDM_Informatika_${filterScope}.pdf`);
                 showToast(`PDF Ekspor RDM (${filterScope}) berhasil diunduh!`);
@@ -1634,7 +1639,7 @@
                                 <option value="TINGKAT_VII">Seluruh Kelas VII</option>
                                 <option value="TINGKAT_VIII">Seluruh Kelas VIII</option>
                                 <option value="TINGKAT_IX">Seluruh Kelas IX</option>
-                                {myClasses.map(c => (
+                                {(myClasses || []).map(c => (
                                     <option key={c.id} value={c.id}>{c.name}</option>
                                 ))}
                             </select>
@@ -1695,18 +1700,20 @@
             );
         }
 
-        function KlasemenTab({ students, scores, groups, setGroups, myClasses, tps, settings, showToast }) {
+        function KlasemenTab({ students, scores, groups, setGroups, myClasses, tps, settings, showToast, triggerConfirm }) {
             const [filterScope, setFilterScope] = useState('ALL');
-            const [viewMode, setViewMode] = useState('individual'); // 'individual' or 'group'
+            const [viewMode, setViewMode] = useState('individual');
             const [newGroupModal, setNewGroupModal] = useState(false);
             const [newGroup, setNewGroup] = useState({ name: '', classId: '8A', studentIds: [] });
+            const [editGroupModal, setEditGroupModal] = useState(false);
+            const [editingGroup, setEditingGroup] = useState(null);
 
             const rankedStudents = useMemo(() => {
-                let list = students;
+                let list = students || [];
                 if (filterScope !== 'ALL') {
                     if (filterScope.startsWith('TINGKAT_')) {
                         const lvl = filterScope.replace('TINGKAT_', '');
-                        const classIdsInLvl = myClasses.filter(c => c.level === lvl).map(c => c.id);
+                        const classIdsInLvl = (myClasses || []).filter(c => c.level === lvl).map(c => c.id);
                         list = list.filter(s => classIdsInLvl.includes(s.classId));
                     } else {
                         list = list.filter(s => s.classId === filterScope);
@@ -1724,7 +1731,7 @@
                 if (filterScope !== 'ALL') {
                     if (filterScope.startsWith('TINGKAT_')) {
                         const lvl = filterScope.replace('TINGKAT_', '');
-                        const classIdsInLvl = myClasses.filter(c => c.level === lvl).map(c => c.id);
+                        const classIdsInLvl = (myClasses || []).filter(c => c.level === lvl).map(c => c.id);
                         list = list.filter(g => classIdsInLvl.includes(g.classId));
                     } else {
                         list = list.filter(g => g.classId === filterScope);
@@ -1737,8 +1744,33 @@
             const top3Groups = rankedGroups.slice(0, 3);
 
             const handleAddPoints = (groupId, delta) => {
-                setGroups(prev => prev.map(g => g.id === groupId ? { ...g, points: Math.max(0, g.points + delta) } : g));
+                setGroups(prev => (prev || []).map(g => g.id === groupId ? { ...g, points: Math.max(0, g.points + delta) } : g));
                 showToast(`Poin kelompok berhasil diperbarui! (${delta > 0 ? '+' : ''}${delta})`);
+            };
+
+            const handleEditGroup = (g) => {
+                setEditingGroup({ id: g.id, name: g.name, classId: g.classId, points: g.points, studentIds: g.studentIds || [] });
+                setEditGroupModal(true);
+            };
+
+            const handleSaveEditGroup = (e) => {
+                e.preventDefault();
+                if (!editingGroup || !editingGroup.name.trim()) return;
+                setGroups(prev => (prev || []).map(g => g.id === editingGroup.id ? editingGroup : g));
+                setEditGroupModal(false);
+                setEditingGroup(null);
+                showToast(`Data kelompok ${editingGroup.name} berhasil diperbarui!`);
+            };
+
+            const handleDeleteGroup = (g) => {
+                triggerConfirm(
+                    'Hapus Kelompok',
+                    `Apakah Anda yakin ingin menghapus kelompok "${g.name}"? Data perolehan poin kelompok ini akan dihapus.`,
+                    () => {
+                        setGroups(prev => (prev || []).filter(item => item.id !== g.id));
+                        showToast(`Kelompok ${g.name} berhasil dihapus!`);
+                    }
+                );
             };
 
             const handleCreateGroup = (e) => {
@@ -1747,12 +1779,12 @@
                 const created = {
                     id: 'grp-' + Date.now(),
                     name: newGroup.name.trim(),
-                    classId: newGroup.classId,
+                    classId: newGroup.classId || (myClasses && myClasses[0] ? myClasses[0].id : '8A'),
                     points: 0,
-                    studentIds: newGroup.studentIds
+                    studentIds: []
                 };
-                setGroups(prev => [...prev, created]);
-                setNewGroup({ name: '', classId: '8A', studentIds: [] });
+                setGroups(prev => [...(prev || []), created]);
+                setNewGroup({ name: '', classId: myClasses && myClasses[0] ? myClasses[0].id : '8A', studentIds: [] });
                 setNewGroupModal(false);
                 showToast(`Kelompok ${created.name} berhasil dibuat!`);
             };
@@ -1760,9 +1792,9 @@
             return (
                 <div className="space-y-6">
                     <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center gap-3">
                             <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Rombel / Kelas:</label>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">Filter Rombel / Kelas:</label>
                                 <select 
                                     value={filterScope} 
                                     onChange={e => setFilterScope(e.target.value)}
@@ -1772,7 +1804,7 @@
                                     <option value="TINGKAT_VII">Seluruh Kelas VII</option>
                                     <option value="TINGKAT_VIII">Seluruh Kelas VIII</option>
                                     <option value="TINGKAT_IX">Seluruh Kelas IX</option>
-                                    {myClasses.map(c => (
+                                    {(myClasses || []).map(c => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                 </select>
@@ -1782,80 +1814,87 @@
                         <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
                             <button 
                                 onClick={() => setViewMode('individual')}
-                                className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${viewMode === 'individual' ? 'bg-white text-sky-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                                className={`px-4 py-2 rounded-lg text-xs font-bold transition ${viewMode === 'individual' ? 'bg-white text-sky-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                             >
-                                <Icon name="students" className="w-4 h-4" />
-                                <span>Klasemen Individu</span>
+                                👤 Klasemen Individu Siswa
                             </button>
                             <button 
                                 onClick={() => setViewMode('group')}
-                                className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${viewMode === 'group' ? 'bg-white text-sky-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                                className={`px-4 py-2 rounded-lg text-xs font-bold transition ${viewMode === 'group' ? 'bg-white text-sky-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                             >
-                                <Icon name="users" className="w-4 h-4" />
-                                <span>Klasemen Kelompok (Poin)</span>
+                                👥 Klasemen Grup / Kelompok
                             </button>
                         </div>
                     </div>
 
                     {viewMode === 'individual' ? (
-                        <>
-                            {top3Students.length >= 3 && (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-                                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center md:mt-6 order-2 md:order-1">
-                                        <div className="text-3xl mb-1">🥈</div>
-                                        <div className="text-xs font-black text-slate-500 uppercase tracking-wider">Juara 2</div>
-                                        <div className="font-black text-slate-900 mt-1">{top3Students[1].name}</div>
-                                        <div className="text-xs text-slate-600 font-bold">{top3Students[1].classId}</div>
-                                        <div className="text-2xl font-black text-sky-700 mt-2">{top3Students[1].finalScore}</div>
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                                {top3Students[1] && (
+                                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center relative order-2 md:order-1">
+                                        <div className="w-12 h-12 rounded-full bg-slate-200 text-slate-700 font-black text-xl flex items-center justify-center mb-2 shadow-inner">2</div>
+                                        <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 font-extrabold text-[10px] rounded-full mb-1">JUARA 2 🥈</span>
+                                        <h4 className="font-extrabold text-slate-900 text-sm">{top3Students[1].name}</h4>
+                                        <p className="text-xs text-slate-500 font-bold">Kelas {top3Students[1].classId}</p>
+                                        <div className="mt-3 text-lg font-black text-slate-800">Skor: {top3Students[1].finalScore}</div>
                                     </div>
-
-                                    <div className="bg-gradient-to-b from-amber-50 to-white p-6 rounded-2xl border-2 border-amber-300 shadow-md text-center order-1 md:order-2 transform md:-translate-y-2">
-                                        <div className="text-4xl mb-1">🥇</div>
-                                        <div className="text-xs font-black text-amber-800 uppercase tracking-wider">Juara 1 (Bintang Pelajar)</div>
-                                        <div className="font-black text-slate-900 text-lg mt-1">{top3Students[0].name}</div>
-                                        <div className="text-xs text-slate-600 font-bold">{top3Students[0].classId}</div>
-                                        <div className="text-3xl font-black text-amber-700 mt-2">{top3Students[0].finalScore}</div>
+                                )}
+                                {top3Students[0] && (
+                                    <div className="bg-gradient-to-b from-amber-500 to-amber-600 text-white p-6 rounded-2xl shadow-xl text-center flex flex-col items-center justify-center relative order-1 md:order-2 transform md:-translate-y-2">
+                                        <div className="w-14 h-14 rounded-full bg-amber-200 text-amber-900 font-black text-2xl flex items-center justify-center mb-2 shadow-lg">1</div>
+                                        <span className="px-3 py-1 bg-amber-400/40 font-black text-xs rounded-full mb-1 tracking-wider">JUARA 1 🥇</span>
+                                        <h4 className="font-extrabold text-base">{top3Students[0].name}</h4>
+                                        <p className="text-xs text-amber-100 font-bold">Kelas {top3Students[0].classId}</p>
+                                        <div className="mt-3 text-2xl font-black">Skor: {top3Students[0].finalScore}</div>
                                     </div>
-
-                                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center md:mt-8 order-3">
-                                        <div className="text-3xl mb-1">🥉</div>
-                                        <div className="text-xs font-black text-amber-900 uppercase tracking-wider">Juara 3</div>
-                                        <div className="font-black text-slate-900 mt-1">{top3Students[2].name}</div>
-                                        <div className="text-xs text-slate-600 font-bold">{top3Students[2].classId}</div>
-                                        <div className="text-2xl font-black text-amber-900 mt-2">{top3Students[2].finalScore}</div>
+                                )}
+                                {top3Students[2] && (
+                                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center relative order-3">
+                                        <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-800 font-black text-xl flex items-center justify-center mb-2 shadow-inner">3</div>
+                                        <span className="px-2.5 py-0.5 bg-amber-50 text-amber-800 font-extrabold text-[10px] rounded-full mb-1">JUARA 3 🥉</span>
+                                        <h4 className="font-extrabold text-slate-900 text-sm">{top3Students[2].name}</h4>
+                                        <p className="text-xs text-slate-500 font-bold">Kelas {top3Students[2].classId}</p>
+                                        <div className="mt-3 text-lg font-black text-slate-800">Skor: {top3Students[2].finalScore}</div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
 
                             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                                <div className="p-4 border-b bg-slate-50/50">
+                                    <h3 className="font-bold text-slate-900 text-sm">Peringkat Kelulusan & Nilai Teratas Siswa</h3>
+                                </div>
                                 <table className="w-full text-left border-collapse text-xs">
                                     <thead>
                                         <tr className="bg-slate-100 text-slate-800 font-bold uppercase">
-                                            <th className="py-3 px-4">Peringkat</th>
+                                            <th className="py-3 px-4 text-center w-12">Rank</th>
                                             <th className="py-3 px-4">No. Absen</th>
-                                            <th className="py-3 px-4">Nama Siswa</th>
+                                            <th className="py-3 px-4">Nama Lengkap Siswa</th>
                                             <th className="py-3 px-3">Kelas</th>
-                                            <th className="py-3 px-3 text-center">Nilai Akhir</th>
-                                            <th className="py-3 px-3 text-center">Predikat</th>
+                                            <th className="py-3 px-3 text-center">Formatif</th>
+                                            <th className="py-3 px-3 text-center">Praktikum</th>
+                                            <th className="py-3 px-3 text-center">PAS</th>
+                                            <th className="py-3 px-4 text-center bg-slate-200 font-black text-slate-950">Nilai Akhir</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                         {rankedStudents.map((st, idx) => (
                                             <tr key={st.id} className="hover:bg-slate-50">
-                                                <td className="py-3 px-4 font-black text-slate-800">#{idx + 1}</td>
-                                                <td className="py-3 px-4 font-mono font-bold text-slate-700">{st.nisn}</td>
-                                                <td className="py-3 px-4 font-bold text-slate-900">{st.name}</td>
-                                                <td className="py-3 px-3 font-bold text-slate-700">{st.classId}</td>
-                                                <td className="py-3 px-3 text-center font-black text-sky-800 text-sm">{st.finalScore}</td>
-                                                <td className="py-3 px-3 text-center font-extrabold">{st.predicate}</td>
+                                                <td className="py-2.5 px-4 text-center font-extrabold text-slate-700">{idx + 1}</td>
+                                                <td className="py-2.5 px-4 font-mono font-bold text-slate-700">{st.nisn}</td>
+                                                <td className="py-2.5 px-4 font-bold text-slate-900">{st.name}</td>
+                                                <td className="py-2.5 px-3 font-bold text-slate-700">{st.classId}</td>
+                                                <td className="py-2.5 px-3 text-center font-bold text-slate-800">{st.avgFormative}</td>
+                                                <td className="py-2.5 px-3 text-center font-bold text-slate-800">{st.practicalScore}</td>
+                                                <td className="py-2.5 px-3 text-center font-bold text-slate-800">{st.pasScore}</td>
+                                                <td className="py-2.5 px-4 text-center font-black text-slate-950 bg-slate-100">{st.finalScore}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
-                        </>
+                        </div>
                     ) : (
-                        <>
+                        <div className="space-y-6">
                             <div className="flex justify-end">
                                 <button 
                                     onClick={() => setNewGroupModal(true)}
@@ -1866,52 +1905,85 @@
                                 </button>
                             </div>
 
-                            {top3Groups.length > 0 && (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                                    {top3Groups.map((g, idx) => (
-                                        <div key={g.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-2xl">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</span>
-                                                <span className="px-2 py-0.5 bg-sky-100 text-sky-800 font-bold text-[10px] rounded-full">{g.classId}</span>
-                                            </div>
-                                            <h4 className="font-extrabold text-slate-900 text-sm">{g.name}</h4>
-                                            <div className="text-2xl font-black text-sky-700">{g.points} Poin</div>
-                                            <div className="pt-2 border-t flex items-center justify-between">
-                                                <span className="text-xs text-slate-500 font-medium">Beri Poin:</span>
-                                                <div className="flex gap-1">
-                                                    <button onClick={() => handleAddPoints(g.id, 5)} className="px-2 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded hover:bg-emerald-200">+5</button>
-                                                    <button onClick={() => handleAddPoints(g.id, 10)} className="px-2 py-1 bg-sky-100 text-sky-800 font-bold text-xs rounded hover:bg-sky-200">+10</button>
-                                                    <button onClick={() => handleAddPoints(g.id, -5)} className="px-2 py-1 bg-rose-100 text-rose-800 font-bold text-xs rounded hover:bg-rose-200">-5</button>
-                                                </div>
-                                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                                {top3Groups[1] && (
+                                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center relative order-2 md:order-1">
+                                        <div className="w-12 h-12 rounded-full bg-slate-200 text-slate-700 font-black text-xl flex items-center justify-center mb-2 shadow-inner">2</div>
+                                        <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 font-extrabold text-[10px] rounded-full mb-1">JUARA 2 🥈</span>
+                                        <h4 className="font-extrabold text-slate-900 text-sm">{top3Groups[1].name}</h4>
+                                        <p className="text-xs text-slate-500 font-bold">Kelas {top3Groups[1].classId}</p>
+                                        <div className="mt-3 text-lg font-black text-sky-700">{top3Groups[1].points} Poin</div>
+                                        <div className="flex gap-2 mt-2">
+                                            <button onClick={() => handleEditGroup(top3Groups[1])} className="text-xs text-sky-600 font-bold hover:underline">Edit</button>
+                                            <button onClick={() => handleDeleteGroup(top3Groups[1])} className="text-xs text-rose-600 font-bold hover:underline">Hapus</button>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
+                                    </div>
+                                )}
+                                {top3Groups[0] && (
+                                    <div className="bg-gradient-to-b from-indigo-700 to-indigo-900 text-white p-6 rounded-2xl shadow-xl text-center flex flex-col items-center justify-center relative order-1 md:order-2 transform md:-translate-y-2">
+                                        <div className="w-14 h-14 rounded-full bg-indigo-200 text-indigo-950 font-black text-2xl flex items-center justify-center mb-2 shadow-lg">1</div>
+                                        <span className="px-3 py-1 bg-indigo-500/40 font-black text-xs rounded-full mb-1 tracking-wider">JUARA 1 🥇</span>
+                                        <h4 className="font-extrabold text-base">{top3Groups[0].name}</h4>
+                                        <p className="text-xs text-indigo-200 font-bold">Kelas {top3Groups[0].classId}</p>
+                                        <div className="mt-3 text-2xl font-black">{top3Groups[0].points} Poin</div>
+                                        <div className="flex gap-2 mt-2">
+                                            <button onClick={() => handleEditGroup(top3Groups[0])} className="text-xs text-indigo-200 font-bold hover:underline">Edit</button>
+                                            <button onClick={() => handleDeleteGroup(top3Groups[0])} className="text-xs text-rose-300 font-bold hover:underline">Hapus</button>
+                                        </div>
+                                    </div>
+                                )}
+                                {top3Groups[2] && (
+                                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center relative order-3">
+                                        <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-800 font-black text-xl flex items-center justify-center mb-2 shadow-inner">3</div>
+                                        <span className="px-2.5 py-0.5 bg-amber-50 text-amber-800 font-extrabold text-[10px] rounded-full mb-1">JUARA 3 🥉</span>
+                                        <h4 className="font-extrabold text-slate-900 text-sm">{top3Groups[2].name}</h4>
+                                        <p className="text-xs text-slate-500 font-bold">Kelas {top3Groups[2].classId}</p>
+                                        <div className="mt-3 text-lg font-black text-sky-700">{top3Groups[2].points} Poin</div>
+                                        <div className="flex gap-2 mt-2">
+                                            <button onClick={() => handleEditGroup(top3Groups[2])} className="text-xs text-sky-600 font-bold hover:underline">Edit</button>
+                                            <button onClick={() => handleDeleteGroup(top3Groups[2])} className="text-xs text-rose-600 font-bold hover:underline">Hapus</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
                             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                                <div className="p-4 border-b bg-slate-50/50">
+                                    <h3 className="font-bold text-slate-900 text-sm">Klasemen Perolehan Poin Kelompok</h3>
+                                </div>
                                 <table className="w-full text-left border-collapse text-xs">
                                     <thead>
                                         <tr className="bg-slate-100 text-slate-800 font-bold uppercase">
-                                            <th className="py-3 px-4">Peringkat</th>
+                                            <th className="py-3 px-4 text-center w-12">Rank</th>
                                             <th className="py-3 px-4">Nama Kelompok</th>
                                             <th className="py-3 px-3">Kelas</th>
-                                            <th className="py-3 px-3 text-center">Total Poin</th>
-                                            <th className="py-3 px-4 text-center">Aksi Poin</th>
+                                            <th className="py-3 px-4 text-center">Total Poin</th>
+                                            <th className="py-3 px-4 text-center">Tambah / Kurang Poin</th>
+                                            <th className="py-3 px-4 text-center">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                         {rankedGroups.map((g, idx) => (
                                             <tr key={g.id} className="hover:bg-slate-50">
-                                                <td className="py-3 px-4 font-black text-slate-800">#{idx + 1}</td>
-                                                <td className="py-3 px-4 font-bold text-slate-900">{g.name}</td>
-                                                <td className="py-3 px-3 font-bold text-slate-700">{g.classId}</td>
-                                                <td className="py-3 px-3 text-center font-black text-sky-800 text-sm">{g.points}</td>
-                                                <td className="py-3 px-4 text-center">
+                                                <td className="py-2.5 px-4 text-center font-extrabold text-slate-700">{idx + 1}</td>
+                                                <td className="py-2.5 px-4 font-bold text-slate-900">{g.name}</td>
+                                                <td className="py-2.5 px-3 font-bold text-slate-700">{g.classId}</td>
+                                                <td className="py-2.5 px-4 text-center font-black text-sky-800 text-sm">{g.points}</td>
+                                                <td className="py-2.5 px-4 text-center">
                                                     <div className="flex items-center justify-center gap-1">
-                                                        <button onClick={() => handleAddPoints(g.id, 5)} className="px-2 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded hover:bg-emerald-200">+5</button>
-                                                        <button onClick={() => handleAddPoints(g.id, 10)} className="px-2 py-1 bg-sky-100 text-sky-800 font-bold text-xs rounded hover:bg-sky-200">+10</button>
-                                                        <button onClick={() => handleAddPoints(g.id, -5)} className="px-2 py-1 bg-rose-100 text-rose-800 font-bold text-xs rounded hover:bg-rose-200">-5</button>
+                                                        <button onClick={() => handleAddPoints(g.id, 5)} className="px-2 py-1 bg-emerald-100 text-emerald-800 rounded font-bold hover:bg-emerald-200">+5</button>
+                                                        <button onClick={() => handleAddPoints(g.id, 10)} className="px-2 py-1 bg-emerald-100 text-emerald-800 rounded font-bold hover:bg-emerald-200">+10</button>
+                                                        <button onClick={() => handleAddPoints(g.id, -5)} className="px-2 py-1 bg-rose-100 text-rose-800 rounded font-bold hover:bg-rose-200">-5</button>
+                                                    </div>
+                                                </td>
+                                                <td className="py-2.5 px-4 text-center">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <button onClick={() => handleEditGroup(g)} className="text-slate-500 hover:text-sky-600 transition p-1">
+                                                            <Icon name="edit" className="w-4 h-4" />
+                                                        </button>
+                                                        <button onClick={() => handleDeleteGroup(g)} className="text-slate-500 hover:text-rose-600 transition p-1">
+                                                            <Icon name="trash" className="w-4 h-4" />
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -1919,7 +1991,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                        </>
+                        </div>
                     )}
 
                     {newGroupModal && (
@@ -1936,38 +2008,64 @@
                                         <label className="block text-xs font-bold text-slate-700 mb-1">Nama Kelompok:</label>
                                         <input 
                                             type="text" 
-                                            placeholder="e.g. Kelompok Cyber 1"
                                             value={newGroup.name}
                                             onChange={e => setNewGroup({ ...newGroup, name: e.target.value })}
+                                            placeholder="e.g. Kelompok Turing"
                                             className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-700 mb-1">Rombel / Kelas:</label>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Pilih Rombel / Kelas:</label>
                                         <select 
                                             value={newGroup.classId}
                                             onChange={e => setNewGroup({ ...newGroup, classId: e.target.value })}
                                             className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
                                         >
-                                            {myClasses.map(c => (
+                                            {(myClasses || []).map(c => (
                                                 <option key={c.id} value={c.id}>{c.name}</option>
                                             ))}
                                         </select>
                                     </div>
                                     <div className="flex justify-end gap-2 pt-2 border-t">
-                                        <button 
-                                            type="button"
-                                            onClick={() => setNewGroupModal(false)}
-                                            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
-                                        >
-                                            Batal
-                                        </button>
-                                        <button 
-                                            type="submit"
-                                            className="px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm transition"
-                                        >
-                                            Simpan Kelompok
-                                        </button>
+                                        <button type="button" onClick={() => setNewGroupModal(false)} className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Batal</button>
+                                        <button type="submit" className="px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm">Simpan Kelompok</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {editGroupModal && editingGroup && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+                                <div className="flex items-center justify-between border-b pb-3">
+                                    <h3 className="font-extrabold text-slate-900 text-sm">Edit Kelompok Praktikum</h3>
+                                    <button onClick={() => setEditGroupModal(false)} className="p-1 text-slate-400 hover:text-slate-700">
+                                        <Icon name="x" className="w-5 h-5" />
+                                    </button>
+                                </div>
+                                <form onSubmit={handleSaveEditGroup} className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Nama Kelompok:</label>
+                                        <input 
+                                            type="text" 
+                                            value={editingGroup.name}
+                                            onChange={e => setEditingGroup({ ...editingGroup, name: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Total Poin Kelompok:</label>
+                                        <input 
+                                            type="number" 
+                                            value={editingGroup.points}
+                                            onChange={e => setEditingGroup({ ...editingGroup, points: parseInt(e.target.value) || 0 })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        />
+                                    </div>
+                                    <div className="flex justify-end gap-2 pt-2 border-t">
+                                        <button type="button" onClick={() => setEditGroupModal(false)} className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Batal</button>
+                                        <button type="submit" className="px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm">Simpan Perubahan</button>
                                     </div>
                                 </form>
                             </div>
@@ -1978,18 +2076,20 @@
         }
 
         function StudentManagementTab({ students, setStudents, setScores, setAttendance, myClasses, selectedClass, setSelectedClass, showToast, triggerConfirm }) {
-            const [editingId, setEditingId] = useState(null);
-            const [editForm, setEditForm] = useState({ name: '', nisn: '', gender: 'L', classId: '' });
-            const [newStudent, setNewStudent] = useState({ name: '', nisn: '', gender: 'L' });
-            const [previewData, setPreviewData] = useState(null);
             const [selectedStudentIds, setSelectedStudentIds] = useState([]);
+            const [newStudent, setNewStudent] = useState({ nisn: '', name: '', gender: 'L', classId: selectedClass });
+            const [editingId, setEditingId] = useState(null);
+            const [editForm, setEditForm] = useState({ nisn: '', name: '', gender: 'L', classId: '' });
+            const [previewData, setPreviewData] = useState(null);
+            const [importTargetClass, setImportTargetClass] = useState(selectedClass);
 
-            const classStudents = useMemo(() => students.filter(s => s.classId === selectedClass), [students, selectedClass]);
-
+            // Sync selectedClass to newStudent form if changed from main dropdown
             useEffect(() => {
-                setSelectedStudentIds([]);
+                setNewStudent(prev => ({ ...prev, classId: selectedClass }));
+                setImportTargetClass(selectedClass);
             }, [selectedClass]);
 
+            const classStudents = useMemo(() => (students || []).filter(s => s.classId === selectedClass), [students, selectedClass]);
             const isAllSelected = classStudents.length > 0 && selectedStudentIds.length === classStudents.length;
 
             const handleToggleSelectAll = () => {
@@ -2009,166 +2109,125 @@
             const handleAddStudent = (e) => {
                 e.preventDefault();
                 if (!newStudent.name.trim() || !newStudent.nisn.trim()) {
-                    showToast('Nama dan ID Absen wajib diisi!', 'error');
+                    showToast('Nomor Absen/ID dan Nama Siswa wajib diisi!', 'error');
                     return;
                 }
+                const targetCls = newStudent.classId || selectedClass;
                 const created = {
                     id: 'st-' + Date.now(),
                     nisn: newStudent.nisn.trim(),
                     name: newStudent.name.trim(),
                     gender: newStudent.gender,
-                    classId: selectedClass
+                    classId: targetCls
                 };
-                setStudents(prev => [...prev, created]);
-                setNewStudent({ name: '', nisn: '', gender: 'L' });
-                showToast(`Siswa ${created.name} berhasil ditambahkan!`);
+                setStudents(prev => [...(prev || []), created]);
+                setNewStudent({ nisn: '', name: '', gender: 'L', classId: targetCls });
+                showToast(`Siswa ${created.name} berhasil ditambahkan ke ${targetCls}!`);
             };
 
             const startEdit = (st) => {
                 setEditingId(st.id);
-                setEditForm({ name: st.name, nisn: st.nisn, gender: st.gender, classId: st.classId });
+                setEditForm({ nisn: st.nisn, name: st.name, gender: st.gender, classId: st.classId });
             };
 
             const saveEdit = (id) => {
-                setStudents(prev => prev.map(s => s.id === id ? { ...s, ...editForm } : s));
+                setStudents(prev => (prev || []).map(s => s.id === id ? { ...s, ...editForm } : s));
                 setEditingId(null);
                 showToast('Data siswa berhasil diperbarui!');
             };
 
-            const handleBulkDelete = (targetIds, labelMessage) => {
-                if (!targetIds || targetIds.length === 0) {
-                    showToast('Pilih setidaknya satu siswa untuk dihapus!', 'error');
-                    return;
-                }
-
+            const handleDeleteStudent = (st) => {
                 triggerConfirm(
-                    'Hapus Siswa Massal',
-                    `Apakah Anda yakin ingin menghapus ${targetIds.length} siswa terpilih ${labelMessage}? Seluruh riwayat presensi dan nilainya akan dihapus permanen dari database.`,
+                    'Hapus Data Siswa',
+                    `Apakah Anda yakin ingin menghapus "${st.name}"? Seluruh riwayat presensi dan nilai siswa ini akan dihapus dari database.`,
                     () => {
-                        const targetSet = new Set(targetIds);
-
-                        setStudents(prev => prev.filter(s => !targetSet.has(s.id)));
-
-                        if (setScores) {
-                            setScores(prev => {
-                                const updatedScores = { ...prev };
-                                Object.keys(updatedScores).forEach(clsKey => {
-                                    if (updatedScores[clsKey]) {
-                                        const clsScores = { ...updatedScores[clsKey] };
-                                        targetIds.forEach(stId => delete clsScores[stId]);
-                                        updatedScores[clsKey] = clsScores;
-                                    }
-                                });
-                                return updatedScores;
-                            });
-                        }
-
-                        if (setAttendance) {
-                            setAttendance(prev => {
-                                const updatedAtt = { ...prev };
-                                Object.keys(updatedAtt).forEach(attKey => {
-                                    if (updatedAtt[attKey]) {
-                                        const dayAtt = { ...updatedAtt[attKey] };
-                                        targetIds.forEach(stId => delete dayAtt[stId]);
-                                        updatedAtt[attKey] = dayAtt;
-                                    }
-                                });
-                                return updatedAtt;
-                            });
-                        }
-
-                        setSelectedStudentIds([]);
-                        showToast(`Berhasil menghapus ${targetIds.length} siswa beserta seluruh riwayat nilainya!`);
+                        setStudents(prev => (prev || []).filter(s => s.id !== st.id));
+                        setScores(prev => {
+                            const updated = { ...(prev || {}) };
+                            if (updated[selectedClass]) {
+                                delete updated[selectedClass][st.id];
+                            }
+                            return updated;
+                        });
+                        showToast(`Siswa ${st.name} berhasil dihapus!`);
                     }
                 );
             };
 
-            const handleDeleteStudent = (st) => {
+            const handleBulkDelete = (idsToDelete, description) => {
                 triggerConfirm(
-                    'Hapus Permanen Data Siswa',
-                    `Apakah Anda yakin ingin menghapus data siswa ${st.name} (${st.nisn})? Semua catatan absensi dan nilainya akan dihapus permanen dari database.`,
+                    'Hapus Siswa Terpilih',
+                    `Apakah Anda yakin ingin menghapus ${idsToDelete.length} siswa ${description}? Semua riwayat presensi dan nilainya akan dibersihkan.`,
                     () => {
-                        setStudents(prev => prev.filter(s => s.id !== st.id));
-
-                        if (setScores) {
-                            setScores(prev => {
-                                const updatedScores = { ...prev };
-                                Object.keys(updatedScores).forEach(clsKey => {
-                                    if (updatedScores[clsKey] && updatedScores[clsKey][st.id]) {
-                                        const clsScores = { ...updatedScores[clsKey] };
-                                        delete clsScores[st.id];
-                                        updatedScores[clsKey] = clsScores;
-                                    }
+                        const setIds = new Set(idsToDelete);
+                        setStudents(prev => (prev || []).filter(s => !setIds.has(s.id)));
+                        setScores(prev => {
+                            const updated = { ...(prev || {}) };
+                            if (updated[selectedClass]) {
+                                idsToDelete.forEach(id => {
+                                    delete updated[selectedClass][id];
                                 });
-                                return updatedScores;
-                            });
-                        }
-
-                        if (setAttendance) {
-                            setAttendance(prev => {
-                                const updatedAtt = { ...prev };
-                                Object.keys(updatedAtt).forEach(attKey => {
-                                    if (updatedAtt[attKey] && updatedAtt[attKey][st.id]) {
-                                        const dayAtt = { ...updatedAtt[attKey] };
-                                        delete dayAtt[st.id];
-                                        updatedAtt[attKey] = dayAtt;
-                                    }
-                                });
-                                return updatedAtt;
-                            });
-                        }
-
-                        showToast(`Siswa ${st.name} beserta seluruh riwayat absensi & nilainya telah dihapus permanen!`);
+                            }
+                            return updated;
+                        });
+                        setSelectedStudentIds([]);
+                        showToast(`${idsToDelete.length} data siswa berhasil dihapus!`);
                     }
                 );
             };
 
             const handleDownloadTemplate = () => {
-                const data = [
-                    ["NO_ABSEN_ID", "NAMA_LENGKAP", "JENIS_KELAMIN", "KELAS"],
-                    [`${selectedClass}-01`, "Contoh Siswa Pratama", "L", selectedClass],
-                    [`${selectedClass}-02`, "Contoh Siswi Aisyah", "P", selectedClass]
-                ];
-                const ws = XLSX.utils.aoa_to_sheet(data);
+                if (!window.XLSX) {
+                    showToast("Library SheetJS (XLSX) belum siap.", "error");
+                    return;
+                }
                 const wb = XLSX.utils.book_new();
+                const wsData = [
+                    ["NO_ABSEN", "NAMA_SISWA", "GENDER", "KELAS"],
+                    ["8A-01", "Budi Santoso", "L", selectedClass],
+                    ["8A-02", "Siti Aminah", "P", selectedClass]
+                ];
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
                 XLSX.utils.book_append_sheet(wb, ws, "Template_Siswa");
-                XLSX.writeFile(wb, `Template_Siswa_${selectedClass}.xlsx`);
+                XLSX.writeFile(wb, `Template_Import_Siswa_${selectedClass}.xlsx`);
             };
 
             const handleFileUpload = (e) => {
                 const file = e.target.files[0];
-                if (!file) return;
+                if (!file || !window.XLSX) return;
 
                 const reader = new FileReader();
                 reader.onload = (evt) => {
-                    const bstr = evt.target.result;
-                    const wb = XLSX.read(bstr, { type: 'binary' });
-                    const wsname = wb.SheetNames[0];
-                    const ws = wb.Sheets[wsname];
-                    const rawData = XLSX.utils.sheet_to_json(ws);
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
 
-                    const validRows = [];
-                    rawData.forEach(row => {
-                        if (row.NO_ABSEN_ID && row.NAMA_LENGKAP) {
-                            validRows.push({
-                                id: 'st-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
-                                nisn: String(row.NO_ABSEN_ID).trim(),
-                                name: String(row.NAMA_LENGKAP).trim(),
-                                gender: (row.JENIS_KELAMIN || 'L').toUpperCase(),
-                                classId: selectedClass
-                            });
-                        }
+                    const parsed = json.map((row, idx) => {
+                        const fileClass = row.KELAS || row.kelas || row.CLASS || row.classId;
+                        return {
+                            id: 'st-imp-' + Date.now() + '-' + idx,
+                            nisn: String(row.NO_ABSEN || row.nisn || `${importTargetClass}-${idx + 1}`),
+                            name: String(row.NAMA_SISWA || row.name || 'Siswa Tanpa Nama'),
+                            gender: String(row.GENDER || row.gender || 'L').toUpperCase(),
+                            classId: fileClass ? String(fileClass).trim().toUpperCase() : importTargetClass
+                        };
                     });
 
-                    setPreviewData(validRows);
+                    setPreviewData(parsed);
                 };
-                reader.readAsBinaryString(file);
+                reader.readAsBuffer ? reader.readAsBuffer(file) : reader.readAsArrayBuffer(file);
             };
 
             const confirmImport = () => {
-                if (!previewData) return;
-                setStudents(prev => [...prev, ...previewData]);
-                showToast(`Berhasil mengimpor ${previewData.length} siswa ke kelas ${selectedClass}!`);
+                if (!previewData || previewData.length === 0) return;
+                const confirmedData = previewData.map(st => ({
+                    ...st,
+                    classId: st.classId || importTargetClass
+                }));
+                setStudents(prev => [...(prev || []), ...confirmedData]);
+                showToast(`${confirmedData.length} siswa berhasil diimpor!`);
                 setPreviewData(null);
             };
 
@@ -2176,13 +2235,13 @@
                 <div className="space-y-6">
                     <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center justify-between gap-4">
                         <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Rombel / Kelas:</label>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Tampilkan Rombel / Kelas:</label>
                             <select 
                                 value={selectedClass} 
                                 onChange={e => setSelectedClass(e.target.value)}
                                 className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
                             >
-                                {myClasses.map(c => (
+                                {(myClasses || []).map(c => (
                                     <option key={c.id} value={c.id}>{c.name}</option>
                                 ))}
                             </select>
@@ -2239,18 +2298,38 @@
                         </div>
                     </div>
 
+                    {}
                     {previewData && (
                         <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl space-y-3">
-                            <div className="flex items-center justify-between">
-                                <h4 className="font-bold text-amber-900 text-xs">Pratinjau Data Import Excel ({previewData.length} Siswa)</h4>
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div className="space-y-1">
+                                    <h4 className="font-bold text-amber-900 text-xs">Pratinjau Data Import Excel ({previewData.length} Siswa)</h4>
+                                    <div className="flex items-center gap-2 text-xs">
+                                        <span className="text-slate-700 font-semibold">Default Rombel Impor:</span>
+                                        <select 
+                                            value={importTargetClass}
+                                            onChange={e => {
+                                                const newCls = e.target.value;
+                                                setImportTargetClass(newCls);
+                                                setPreviewData(prev => prev.map(s => ({ ...s, classId: newCls })));
+                                            }}
+                                            className="px-2 py-1 bg-white border border-amber-300 rounded-lg text-xs font-bold text-slate-900"
+                                        >
+                                            {(myClasses || []).map(c => (
+                                                <option key={c.id} value={c.id}>{c.name} ({c.id})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={confirmImport} className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700">Impor Sekarang</button>
-                                    <button onClick={() => setPreviewData(null)} className="px-3 py-1 bg-slate-200 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-300">Batal</button>
+                                    <button onClick={confirmImport} className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 shadow-sm">Impor Sekarang</button>
+                                    <button onClick={() => setPreviewData(null)} className="px-3 py-1.5 bg-slate-200 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-300">Batal</button>
                                 </div>
                             </div>
                         </div>
                     )}
 
+                    {}
                     <form onSubmit={handleAddStudent} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center gap-3">
                         <input 
                             type="text" 
@@ -2273,6 +2352,16 @@
                         >
                             <option value="L">L</option>
                             <option value="P">P</option>
+                        </select>
+                        <select 
+                            value={newStudent.classId}
+                            onChange={e => setNewStudent({ ...newStudent, classId: e.target.value })}
+                            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            title="Pilih Kelas Tujuan"
+                        >
+                            {(myClasses || []).map(c => (
+                                <option key={c.id} value={c.id}>{c.name} ({c.id})</option>
+                            ))}
                         </select>
                         <button type="submit" className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm">
                             <Icon name="plus" className="w-4 h-4" />
@@ -2351,7 +2440,20 @@
                                                         </select>
                                                     ) : st.gender}
                                                 </td>
-                                                <td className="py-2.5 px-3 text-slate-700 font-bold">{st.classId}</td>
+                                                <td className="py-2.5 px-3 text-slate-700 font-bold">
+                                                    {}
+                                                    {isEditing ? (
+                                                        <select 
+                                                            value={editForm.classId} 
+                                                            onChange={e => setEditForm({ ...editForm, classId: e.target.value })}
+                                                            className="px-2 py-1 border rounded text-xs font-bold text-slate-900"
+                                                        >
+                                                            {(myClasses || []).map(c => (
+                                                                <option key={c.id} value={c.id}>{c.id}</option>
+                                                            ))}
+                                                        </select>
+                                                    ) : st.classId}
+                                                </td>
                                                 <td className="py-2.5 px-4 text-center">
                                                     {isEditing ? (
                                                         <div className="flex items-center justify-center gap-1">
@@ -2386,6 +2488,8 @@
 
         function SettingsTab({ settings, setSettings, teacher, setTeacher, myClasses, setMyClasses, tps, setTps, students, setStudents, setScores, setAttendance, syncStatus, showToast, triggerConfirm }) {
             const [subTab, setSubTab] = useState('profile');
+            const [editClassModal, setEditClassModal] = useState(false);
+            const [editingClass, setEditingClass] = useState(null);
             
             const [profileForm, setProfileForm] = useState({
                 name: teacher?.name || '',
@@ -2417,9 +2521,23 @@
                     showToast('Kode dan Nama Rombel wajib diisi!', 'error');
                     return;
                 }
-                setMyClasses(prev => [...prev, { ...newClass, id: newClass.id.toUpperCase() }]);
+                setMyClasses(prev => [...(prev || []), { ...newClass, id: newClass.id.toUpperCase() }]);
                 setNewClass({ id: '', name: '', level: 'VIII', room: 'Lab Komputer 1', schedule: '', capacity: 32, homeroom: '' });
                 showToast('Rombel baru berhasil ditambahkan!');
+            };
+
+            const openEditClass = (c) => {
+                setEditingClass({ ...c });
+                setEditClassModal(true);
+            };
+
+            const handleSaveEditClass = (e) => {
+                e.preventDefault();
+                if (!editingClass.name.trim()) return;
+                setMyClasses(prev => (prev || []).map(c => c.id === editingClass.id ? editingClass : c));
+                setEditClassModal(false);
+                setEditingClass(null);
+                showToast('Data Rombel berhasil diperbarui!');
             };
 
             const handleDeleteClass = (clsId) => {
@@ -2427,13 +2545,13 @@
                     'Hapus Rombel & Seluruh Siswa di Dalamnya', 
                     `PERHATIAN: Menghapus Rombel ${clsId} akan MENGHAPUS OTOMATIS seluruh data siswa, catatan nilai, dan presensi yang terdaftar di Rombel ${clsId} dari database! Apakah Anda yakin?`, 
                     () => {
-                        const studentsInClass = students.filter(s => s.classId === clsId);
+                        const studentsInClass = (students || []).filter(s => s.classId === clsId);
                         const studentIdsInClass = new Set(studentsInClass.map(s => s.id));
 
-                        setStudents(prev => prev.filter(s => s.classId !== clsId));
+                        setStudents(prev => (prev || []).filter(s => s.classId !== clsId));
 
                         setScores(prev => {
-                            const updated = { ...prev };
+                            const updated = { ...(prev || {}) };
                             delete updated[clsId];
                             Object.keys(updated).forEach(cKey => {
                                 if (updated[cKey]) {
@@ -2446,7 +2564,7 @@
                         });
 
                         setAttendance(prev => {
-                            const updated = { ...prev };
+                            const updated = { ...(prev || {}) };
                             Object.keys(updated).forEach(attKey => {
                                 if (attKey.endsWith(`_${clsId}`)) {
                                     delete updated[attKey];
@@ -2459,7 +2577,7 @@
                             return updated;
                         });
 
-                        setMyClasses(prev => prev.filter(c => c.id !== clsId));
+                        setMyClasses(prev => (prev || []).filter(c => c.id !== clsId));
                         showToast(`Rombel ${clsId} beserta ${studentsInClass.length} siswa & seluruh nilainya berhasil dihapus!`);
                     }
                 );
@@ -2471,14 +2589,14 @@
                     showToast('Kode dan Deskripsi TP wajib diisi!', 'error');
                     return;
                 }
-                setTps(prev => [...prev, { id: 'tp-' + Date.now(), ...newTp }]);
+                setTps(prev => [...(prev || []), { id: 'tp-' + Date.now(), ...newTp }]);
                 setNewTp({ code: '', name: '' });
                 showToast('Tujuan Pembelajaran (TP) berhasil ditambahkan!');
             };
 
             const handleDeleteTp = (tpId) => {
                 triggerConfirm('Hapus Tujuan Pembelajaran', 'Apakah Anda yakin ingin menghapus TP ini?', () => {
-                    setTps(prev => prev.filter(t => t.id !== tpId));
+                    setTps(prev => (prev || []).filter(t => t.id !== tpId));
                     showToast('TP berhasil dihapus!');
                 });
             };
@@ -2664,7 +2782,7 @@
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
-                                        {myClasses.map(c => (
+                                        {(myClasses || []).map(c => (
                                             <tr key={c.id} className="hover:bg-slate-50">
                                                 <td className="py-3 px-4 font-mono font-bold text-slate-900">{c.id}</td>
                                                 <td className="py-3 px-4 font-bold text-slate-900">{c.name}</td>
@@ -2672,15 +2790,78 @@
                                                 <td className="py-3 px-3 text-slate-700">{c.room}</td>
                                                 <td className="py-3 px-3 text-slate-700">{c.homeroom || '-'}</td>
                                                 <td className="py-3 px-4 text-center">
-                                                    <button onClick={() => handleDeleteClass(c.id)} className="text-rose-600 hover:text-rose-800 font-bold text-xs">
-                                                        Hapus Rombel
-                                                    </button>
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <button onClick={() => openEditClass(c)} className="text-sky-600 hover:text-sky-800 font-bold text-xs">
+                                                            Edit
+                                                        </button>
+                                                        <button onClick={() => handleDeleteClass(c.id)} className="text-rose-600 hover:text-rose-800 font-bold text-xs">
+                                                            Hapus Rombel
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
+
+                            {editClassModal && editingClass && (
+                                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+                                        <div className="flex items-center justify-between border-b pb-3">
+                                            <h3 className="font-extrabold text-slate-900 text-sm">Edit Rombel {editingClass.id}</h3>
+                                            <button onClick={() => setEditClassModal(false)} className="p-1 text-slate-400 hover:text-slate-700">
+                                                <Icon name="x" className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                        <form onSubmit={handleSaveEditClass} className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-700 mb-1">Nama Rombel:</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={editingClass.name}
+                                                    onChange={e => setEditingClass({ ...editingClass, name: e.target.value })}
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-700 mb-1">Tingkat:</label>
+                                                <select 
+                                                    value={editingClass.level}
+                                                    onChange={e => setEditingClass({ ...editingClass, level: e.target.value })}
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                                >
+                                                    <option value="VII">VII</option>
+                                                    <option value="VIII">VIII</option>
+                                                    <option value="IX">IX</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-700 mb-1">Ruangan Lab:</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={editingClass.room}
+                                                    onChange={e => setEditingClass({ ...editingClass, room: e.target.value })}
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-700 mb-1">Wali Kelas:</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={editingClass.homeroom || ''}
+                                                    onChange={e => setEditingClass({ ...editingClass, homeroom: e.target.value })}
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                                />
+                                            </div>
+                                            <div className="flex justify-end gap-2 pt-2 border-t">
+                                                <button type="button" onClick={() => setEditClassModal(false)} className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Batal</button>
+                                                <button type="submit" className="px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm">Simpan Perubahan</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -2766,7 +2947,7 @@
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
-                                        {tps.map(tp => (
+                                        {(tps || []).map(tp => (
                                             <tr key={tp.id} className="hover:bg-slate-50">
                                                 <td className="py-3 px-4 font-mono font-bold text-sky-800">{tp.code}</td>
                                                 <td className="py-3 px-4 font-bold text-slate-900">{tp.name}</td>
@@ -2792,61 +2973,81 @@
             const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
             const [teacher, setTeacher] = useState(() => {
-                const saved = localStorage.getItem('simadrasah_teacher');
-                return saved ? JSON.parse(saved) : {
-                    name: 'Azhary Mardhani, S.Kom.',
-                    nip: '19880512 201503 1 002',
-                    subject: 'Informatika',
-                    school: 'MTs Negeri 1 Jakarta',
-                    phone: ''
-                };
+                try {
+                    const saved = localStorage.getItem('simadrasah_teacher');
+                    return saved ? JSON.parse(saved) : {
+                        name: 'Azhary Mardhani, S.Kom.',
+                        nip: '19880512 201503 1 002',
+                        subject: 'Informatika',
+                        school: 'MTs Negeri 1 Jakarta',
+                        phone: ''
+                    };
+                } catch(e) {
+                    return { name: 'Azhary Mardhani, S.Kom.', nip: '19880512 201503 1 002', subject: 'Informatika', school: 'MTs Negeri 1 Jakarta', phone: '' };
+                }
             });
 
             const [settings, setSettings] = useState(() => {
-                const saved = localStorage.getItem('simadrasah_settings');
-                return saved ? JSON.parse(saved) : {
-                    weights: { formative: 30, practical: 40, pas: 30 }
-                };
+                try {
+                    const saved = localStorage.getItem('simadrasah_settings');
+                    return saved ? JSON.parse(saved) : { weights: { formative: 30, practical: 40, pas: 30 } };
+                } catch(e) {
+                    return { weights: { formative: 30, practical: 40, pas: 30 } };
+                }
             });
 
             const [activeYear, setActiveYear] = useState('2026/2027');
             const [activeSemester, setActiveSemester] = useState('Ganjil');
 
             const [myClasses, setMyClasses] = useState(() => {
-                const saved = localStorage.getItem('simadrasah_classes');
-                return saved ? JSON.parse(saved) : INITIAL_CLASSES;
+                try {
+                    const saved = localStorage.getItem('simadrasah_classes');
+                    return saved ? JSON.parse(saved) : INITIAL_CLASSES;
+                } catch(e) { return INITIAL_CLASSES; }
             });
 
             const [selectedClass, setSelectedClass] = useState('8A');
 
             const [tps, setTps] = useState(() => {
-                const saved = localStorage.getItem('simadrasah_tps');
-                return saved ? JSON.parse(saved) : INITIAL_TPS;
+                try {
+                    const saved = localStorage.getItem('simadrasah_tps');
+                    return saved ? JSON.parse(saved) : INITIAL_TPS;
+                } catch(e) { return INITIAL_TPS; }
             });
 
             const [students, setStudents] = useState(() => {
-                const saved = localStorage.getItem('simadrasah_students');
-                return saved ? JSON.parse(saved) : INITIAL_STUDENTS;
+                try {
+                    const saved = localStorage.getItem('simadrasah_students');
+                    return saved ? JSON.parse(saved) : INITIAL_STUDENTS;
+                } catch(e) { return INITIAL_STUDENTS; }
             });
 
             const [scores, setScores] = useState(() => {
-                const saved = localStorage.getItem('simadrasah_scores');
-                return saved ? JSON.parse(saved) : INITIAL_SCORES;
+                try {
+                    const saved = localStorage.getItem('simadrasah_scores');
+                    return saved ? JSON.parse(saved) : INITIAL_SCORES;
+                } catch(e) { return INITIAL_SCORES; }
             });
 
             const [groups, setGroups] = useState(() => {
-                const saved = localStorage.getItem('simadrasah_groups');
-                return saved ? JSON.parse(saved) : INITIAL_GROUPS;
+                try {
+                    const saved = localStorage.getItem('simadrasah_groups');
+                    return saved ? JSON.parse(saved) : INITIAL_GROUPS;
+                } catch(e) { return INITIAL_GROUPS; }
             });
 
             const [attendance, setAttendance] = useState(() => {
-                const saved = localStorage.getItem('simadrasah_attendance');
-                return saved ? JSON.parse(saved) : INITIAL_ATTENDANCE;
+                try {
+                    const saved = localStorage.getItem('simadrasah_attendance');
+                    return saved ? JSON.parse(saved) : INITIAL_ATTENDANCE;
+                } catch(e) { return INITIAL_ATTENDANCE; }
             });
 
             const [pcData, setPcData] = useState(() => {
-                const saved = localStorage.getItem('simadrasah_pcdata');
-                return saved ? JSON.parse(saved) : {};
+                try {
+                    const saved = localStorage.getItem('simadrasah_pcdata');
+                    return saved ? JSON.parse(saved) : {};
+                } catch(e) { return {}; }
             });
 
             const [toasts, setToasts] = useState([]);
@@ -2882,8 +3083,9 @@
                 if (!window.FirebaseCloud || !isCloudReady) return;
                 try {
                     setSyncStatus('Saving...');
-                    const { db, doc, setDoc, appId } = window.FirebaseCloud;
-                    const docRef = doc(db, 'simadrasah_records', 'main_data');
+                    const { db, doc, setDoc } = window.FirebaseCloud;
+                    const targetAppId = window.FirebaseCloud.appId || 'simadrasah-app';
+                    const docRef = doc(db, 'artifacts', targetAppId, 'public', 'data', 'simadrasah', 'main_data');
                     await setDoc(docRef, { ...dataToSync, lastUpdated: new Date().toISOString() }, { merge: true });
                     setSyncStatus('Synced');
                 } catch (err) {
@@ -2895,7 +3097,8 @@
             useEffect(() => {
                 if (window.FirebaseCloud) {
                     const { auth, signInAnonymously, signInWithCustomToken, onSnapshot, doc, db } = window.FirebaseCloud;
-                    
+                    const targetAppId = window.FirebaseCloud.appId || 'simadrasah-app';
+
                     const authenticate = async () => {
                         try {
                             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -2913,10 +3116,16 @@
                         setIsCloudReady(true);
                         setSyncStatus('Synced');
                         
-                        const docRef = doc(db, 'simadrasah_records', 'main_data');
+                        let docRef;
+                        try {
+                            docRef = doc(db, 'artifacts', targetAppId, 'public', 'data', 'simadrasah', 'main_data');
+                        } catch(e) {
+                            docRef = doc(db, 'simadrasah_records', 'main_data');
+                        }
+
                         onSnapshot(docRef, 
                             (snapshot) => {
-                                if (snapshot.exists()) {
+                                if (snapshot && snapshot.exists()) {
                                     const cData = snapshot.data();
                                     if (cData.teacher) setTeacher(cData.teacher);
                                     if (cData.settings) setSettings(cData.settings);
@@ -3079,7 +3288,7 @@
                                 <RdmExportTab students={students} scores={scores} attendance={attendance} myClasses={myClasses} tps={tps} settings={settings} teacher={teacher} activeYear={activeYear} activeSemester={activeSemester} showToast={showToast} />
                             )}
                             {activeTab === 'klasemen' && (
-                                <KlasemenTab students={students} scores={scores} groups={groups} setGroups={setGroups} myClasses={myClasses} tps={tps} settings={settings} showToast={showToast} />
+                                <KlasemenTab students={students} scores={scores} groups={groups} setGroups={setGroups} myClasses={myClasses} tps={tps} settings={settings} showToast={showToast} triggerConfirm={triggerConfirm} />
                             )}
                             {activeTab === 'siswa' && (
                                 <StudentManagementTab students={students} setStudents={setStudents} setScores={setScores} setAttendance={setAttendance} myClasses={myClasses} selectedClass={selectedClass} setSelectedClass={setSelectedClass} showToast={showToast} triggerConfirm={triggerConfirm} />
