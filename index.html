@@ -82,31 +82,56 @@
         .print-only {
             display: none;
         }
+
+        .drag-over {
+            border-color: #0284c7 !important;
+            background-color: #e0f2fe !important;
+            box-shadow: 0 0 15px rgba(2, 132, 199, 0.4);
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased selection:bg-sky-500 selection:text-white">
     <script type="module">
-       // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyA3v19W60OQ5qfKYELEvmmkKaO-Gf6zHgs",
-  authDomain: "informatica-class.firebaseapp.com",
-  projectId: "informatica-class",
-  storageBucket: "informatica-class.firebasestorage.app",
-  messagingSenderId: "352869091816",
-  appId: "1:352869091816:web:63927391e58ece712bbc5d",
-  measurementId: "G-YCBJP7YFQF"
-};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'simadrasah-app';
+        
+        // KREDENSIAL FIREBASE PROYEK INFORMATICA-CLASS
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3v19W60OQ5qfKYELEvmmkKaO-Gf6zHgs",
+            authDomain: "informatica-class.firebaseapp.com",
+            projectId: "informatica-class",
+            storageBucket: "informatica-class.firebasestorage.app",
+            messagingSenderId: "352869091816",
+            appId: "1:352869091816:web:63927391e58ece712bbc5d",
+            measurementId: "G-YCBJP7YFQF"
+        };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+        try {
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const auth = getAuth(app);
+            let analytics = null;
+            try { analytics = getAnalytics(app); } catch (ae) {}
+
+            window.FirebaseCloud = {
+                appId,
+                db,
+                auth,
+                analytics,
+                doc,
+                setDoc,
+                getDoc,
+                onSnapshot,
+                signInAnonymously,
+                signInWithCustomToken
+            };
+        } catch (e) {
+            console.warn("Firebase Init Fallback:", e);
+        }
     </script>
 
     <div id="root"></div>
@@ -160,6 +185,10 @@ const analytics = getAnalytics(app);
                     return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.9M15 9A5 5 0 005.07 10.5M7 15l3-3m0 0l3 3m-3-3v8"/></svg>;
                 case 'pc':
                     return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>;
+                case 'drag':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8h16M4 16h16"/></svg>;
+                case 'users':
+                    return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>;
                 default:
                     return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
             }
@@ -201,6 +230,11 @@ const analytics = getAnalytics(app);
                 'st-104': { 'tp-1': 85, 'tp-2': 88, 'tp-3': 82, 'tp-4': 86, practical: 90, pas: 85 }
             }
         };
+
+        const INITIAL_GROUPS = [
+            { id: 'grp-1', name: 'Kelompok Turing (8A)', classId: '8A', points: 45, studentIds: ['st-101', 'st-102'] },
+            { id: 'grp-2', name: 'Kelompok Lovelace (8A)', classId: '8A', points: 30, studentIds: ['st-103', 'st-104'] }
+        ];
 
         const INITIAL_ATTENDANCE = {
             '2026-09-10_8A': {
@@ -331,12 +365,15 @@ const analytics = getAnalytics(app);
                             </span>
                             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Selamat Datang, {teacher.name}</h2>
                             <p className="text-xs sm:text-sm text-sky-100 max-w-2xl leading-relaxed">
-                                NIP: {teacher.nip} • Guru {teacher.subject} di {teacher.school}. Kelola presensi praktikum, input nilai grid, rekap leger, dan ekspor RDM secara terintegrasi.
+                                NIP: {teacher.nip} • Guru {teacher.subject} di {teacher.school}. Kelola presensi praktikum, denah PC lab drag & drop, input nilai grid, dan ekspor RDM secara terintegrasi.
                             </p>
                             
                             <div className="pt-4 flex flex-wrap gap-3">
                                 <button onClick={() => setActiveTab('absensi')} className="px-4 py-2.5 bg-white text-sky-900 rounded-xl font-bold text-xs shadow-md hover:bg-sky-50 transition">
                                     Presensi Lab
+                                </button>
+                                <button onClick={() => setActiveTab('pc_lab')} className="px-4 py-2.5 bg-sky-600 text-white rounded-xl font-bold text-xs shadow-md hover:bg-sky-500 transition">
+                                    Denah PC Lab
                                 </button>
                                 <button onClick={() => setActiveTab('penilaian')} className="px-4 py-2.5 bg-sky-700 text-white rounded-xl font-bold text-xs shadow-md hover:bg-sky-600 transition">
                                     Input Nilai Grid
@@ -679,6 +716,531 @@ const analytics = getAnalytics(app);
                                         })}
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function PcLabTab({ students, pcData, setPcData, myClasses, selectedClass, setSelectedClass, attendance, showToast }) {
+            const TOTAL_PCS = 32;
+            const [selectedPc, setSelectedPc] = useState(null);
+            const [pcModalOpen, setPcModalOpen] = useState(false);
+            const [pcForm, setPcForm] = useState({ studentId: '', condition: 'normal', notes: '' });
+            const [draggedStudentId, setDraggedStudentId] = useState(null);
+            const [draggedPcSource, setDraggedPcSource] = useState(null);
+
+            const classStudents = useMemo(() => students.filter(s => s.classId === selectedClass), [students, selectedClass]);
+            const currentClassPc = pcData[selectedClass] || {};
+
+            const pcList = useMemo(() => {
+                const list = [];
+                for (let i = 1; i <= TOTAL_PCS; i++) {
+                    const pcNum = `PC-${i < 10 ? '0' + i : i}`;
+                    const assign = currentClassPc[pcNum] || { studentId: '', condition: 'normal', notes: '' };
+                    const student = students.find(s => s.id === assign.studentId);
+                    list.push({ pcNum, ...assign, student });
+                }
+                return list;
+            }, [currentClassPc, students]);
+
+            const unassignedStudents = useMemo(() => {
+                const assignedIds = new Set(pcList.map(p => p.studentId).filter(Boolean));
+                return classStudents.filter(s => !assignedIds.has(s.id));
+            }, [classStudents, pcList]);
+
+            const gridRows = useMemo(() => {
+                const rows = [];
+                for (let r = 0; r < 4; r++) {
+                    rows.push({
+                        rowNum: r + 1,
+                        items: pcList.slice(r * 8, (r + 1) * 8)
+                    });
+                }
+                return rows;
+            }, [pcList]);
+
+            const stats = useMemo(() => {
+                let assigned = 0, empty = 0, maintenance = 0, broken = 0;
+                pcList.forEach(pc => {
+                    if (pc.studentId) assigned++; else empty++;
+                    if (pc.condition === 'maintenance') maintenance++;
+                    if (pc.condition === 'broken') broken++;
+                });
+                return { assigned, empty, maintenance, broken, total: TOTAL_PCS };
+            }, [pcList]);
+
+            const handleAutoPlot = () => {
+                setPcData(prev => {
+                    const updated = { ...prev };
+                    if (!updated[selectedClass]) updated[selectedClass] = {};
+                    
+                    classStudents.forEach((st, idx) => {
+                        if (idx < TOTAL_PCS) {
+                            const pcNum = `PC-${idx + 1 < 10 ? '0' + (idx + 1) : idx + 1}`;
+                            const existingCond = (updated[selectedClass][pcNum] && updated[selectedClass][pcNum].condition) || 'normal';
+                            const existingNotes = (updated[selectedClass][pcNum] && updated[selectedClass][pcNum].notes) || '';
+                            updated[selectedClass][pcNum] = {
+                                studentId: st.id,
+                                condition: existingCond,
+                                notes: existingNotes
+                            };
+                        }
+                    });
+                    return updated;
+                });
+                showToast(`Auto-plotting ${Math.min(classStudents.length, TOTAL_PCS)} siswa kelas ${selectedClass} ke PC-01 s/d PC-${Math.min(classStudents.length, TOTAL_PCS)} berhasil!`);
+            };
+
+            const handleResetPlot = () => {
+                setPcData(prev => {
+                    const updated = { ...prev };
+                    updated[selectedClass] = {};
+                    return updated;
+                });
+                showToast(`Plotting PC untuk kelas ${selectedClass} telah dikosongkan!`);
+            };
+
+            const openEditPc = (pc) => {
+                setSelectedPc(pc.pcNum);
+                setPcForm({
+                    studentId: pc.studentId || '',
+                    condition: pc.condition || 'normal',
+                    notes: pc.notes || ''
+                });
+                setPcModalOpen(true);
+            };
+
+            const savePcEdit = (e) => {
+                e.preventDefault();
+                setPcData(prev => {
+                    const updated = { ...prev };
+                    if (!updated[selectedClass]) updated[selectedClass] = {};
+                    updated[selectedClass][selectedPc] = { ...pcForm };
+                    return updated;
+                });
+                setPcModalOpen(false);
+                showToast(`Pengaturan Komputer ${selectedPc} berhasil diperbarui!`);
+            };
+
+            // Drag and Drop Logic
+            const handleDragStartStudent = (e, stId) => {
+                setDraggedStudentId(stId);
+                setDraggedPcSource(null);
+                e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'student', studentId: stId }));
+            };
+
+            const handleDragStartPc = (e, pcNum) => {
+                setDraggedStudentId(null);
+                setDraggedPcSource(pcNum);
+                e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'pc', pcNum }));
+            };
+
+            const handleDragOver = (e) => {
+                e.preventDefault();
+                e.currentTarget.classList.add('drag-over');
+            };
+
+            const handleDragLeave = (e) => {
+                e.currentTarget.classList.remove('drag-over');
+            };
+
+            const handleDropOnPc = (e, targetPcNum) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove('drag-over');
+                const rawData = e.dataTransfer.getData('text/plain');
+                if (!rawData) return;
+                
+                try {
+                    const data = JSON.parse(rawData);
+                    setPcData(prev => {
+                        const updated = { ...prev };
+                        if (!updated[selectedClass]) updated[selectedClass] = {};
+
+                        if (data.type === 'student') {
+                            const stId = data.studentId;
+                            // Remove student from any previous PC in this class
+                            Object.keys(updated[selectedClass]).forEach(pKey => {
+                                if (updated[selectedClass][pKey].studentId === stId) {
+                                    updated[selectedClass][pKey] = { ...updated[selectedClass][pKey], studentId: '' };
+                                }
+                            });
+                            // Assign to target PC
+                            const prevTarget = updated[selectedClass][targetPcNum] || { condition: 'normal', notes: '' };
+                            updated[selectedClass][targetPcNum] = { ...prevTarget, studentId: stId };
+                        } else if (data.type === 'pc') {
+                            const sourcePcNum = data.pcNum;
+                            if (sourcePcNum === targetPcNum) return updated;
+
+                            const sourceData = updated[selectedClass][sourcePcNum] || { studentId: '', condition: 'normal', notes: '' };
+                            const targetData = updated[selectedClass][targetPcNum] || { studentId: '', condition: 'normal', notes: '' };
+
+                            const tempSt = sourceData.studentId;
+                            updated[selectedClass][sourcePcNum] = { ...sourceData, studentId: targetData.studentId };
+                            updated[selectedClass][targetPcNum] = { ...targetData, studentId: tempSt };
+                        }
+                        return updated;
+                    });
+                    showToast(`Posisi Komputer ${targetPcNum} berhasil disesuaikan!`);
+                } catch (err) {
+                    console.error("Drop Parse Error", err);
+                }
+            };
+
+            const handleDropOnTrash = (e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove('drag-over');
+                const rawData = e.dataTransfer.getData('text/plain');
+                if (!rawData) return;
+                try {
+                    const data = JSON.parse(rawData);
+                    if (data.type === 'pc') {
+                        setPcData(prev => {
+                            const updated = { ...prev };
+                            if (updated[selectedClass] && updated[selectedClass][data.pcNum]) {
+                                updated[selectedClass][data.pcNum] = { ...updated[selectedClass][data.pcNum], studentId: '' };
+                            }
+                            return updated;
+                        });
+                        showToast(`Siswa dilepas dari Komputer ${data.pcNum}!`);
+                    }
+                } catch (err) {}
+            };
+
+            const exportPcPDF = () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'landscape' });
+
+                doc.setFontSize(14);
+                doc.text("DENAH POSISI KOMPUTER CLIENT SISWA (LAB KOMPUTER)", 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Kelas: ${selectedClass} | Total Komputer: ${TOTAL_PCS} Unit | Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 22);
+
+                const headCols = ["No. PC", "Siswa Terpasang", "No. Absen / ID", "L/P", "Kondisi Perangkat", "Catatan Lab"];
+                const bodyRows = pcList.map(pc => [
+                    pc.pcNum,
+                    pc.student ? pc.student.name : '(Kosong / Tidak Digunakan)',
+                    pc.student ? pc.student.nisn : '-',
+                    pc.student ? pc.student.gender : '-',
+                    pc.condition === 'normal' ? 'Baik / Normal' : pc.condition === 'maintenance' ? 'Perlu Perbaikan' : 'Rusak / Non-aktif',
+                    pc.notes || '-'
+                ]);
+
+                doc.autoTable({
+                    startY: 28,
+                    head: [headCols],
+                    body: bodyRows,
+                    theme: 'grid',
+                    headStyles: { fillColor: [2, 132, 199] },
+                    styles: { fontSize: 8 }
+                });
+
+                doc.save(`Denah_Lab_Komputer_${selectedClass}.pdf`);
+                showToast(`PDF Denah Komputer Lab (${selectedClass}) berhasil diunduh!`);
+            };
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Rombel / Kelas:</label>
+                                <select 
+                                    value={selectedClass} 
+                                    onChange={e => setSelectedClass(e.target.value)}
+                                    className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                >
+                                    {myClasses.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            <button 
+                                onClick={handleAutoPlot}
+                                className="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
+                                title="Plotting otomatis berdasarkan urutan daftar siswa"
+                            >
+                                <Icon name="check" className="w-4 h-4" />
+                                <span>⚡ Auto-Plot Urut Absen</span>
+                            </button>
+
+                            <button 
+                                onClick={handleResetPlot}
+                                className="px-3.5 py-2 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 border border-slate-200 font-bold text-xs rounded-xl transition flex items-center gap-1.5"
+                            >
+                                <Icon name="reset" className="w-4 h-4" />
+                                <span>Kosongkan Plot</span>
+                            </button>
+
+                            <button 
+                                onClick={exportPcPDF}
+                                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
+                            >
+                                <Icon name="pdf" className="w-4 h-4" />
+                                <span>Cetak Denah PDF</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Komputer</p>
+                                <h4 className="text-xl font-extrabold text-slate-900 mt-0.5">{stats.total} PC</h4>
+                            </div>
+                            <div className="p-2.5 bg-slate-100 text-slate-700 rounded-xl">
+                                <Icon name="pc" className="w-5 h-5" />
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Siswa Terpasang</p>
+                                <h4 className="text-xl font-extrabold text-sky-700 mt-0.5">{stats.assigned} Siswa</h4>
+                            </div>
+                            <div className="p-2.5 bg-sky-50 text-sky-700 rounded-xl">
+                                <Icon name="students" className="w-5 h-5" />
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">PC Kosong</p>
+                                <h4 className="text-xl font-extrabold text-slate-600 mt-0.5">{stats.empty} Unit</h4>
+                            </div>
+                            <div className="p-2.5 bg-slate-50 text-slate-500 rounded-xl">
+                                <Icon name="pc" className="w-5 h-5" />
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Perlu Perbaikan</p>
+                                <h4 className="text-xl font-extrabold text-amber-700 mt-0.5">{stats.maintenance + stats.broken} Unit</h4>
+                            </div>
+                            <div className="p-2.5 bg-amber-50 text-amber-700 rounded-xl">
+                                <Icon name="settings" className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        {/* Interactive Drag Pool Sidebar */}
+                        <div className="space-y-4">
+                            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                                <h4 className="font-extrabold text-slate-900 text-xs flex items-center gap-1.5">
+                                    <Icon name="drag" className="w-4 h-4 text-sky-600" />
+                                    <span>Tarik Siswa ke PC ({unassignedStudents.length})</span>
+                                </h4>
+                                <p className="text-[11px] text-slate-500">Tarik nama siswa di bawah ini langsung ke kotak PC pilihan Anda:</p>
+                                
+                                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                                    {unassignedStudents.length === 0 ? (
+                                        <div className="text-center py-6 text-xs text-slate-400 font-medium">
+                                            Seluruh siswa {selectedClass} sudah mendapat PC! 🎉
+                                        </div>
+                                    ) : (
+                                        unassignedStudents.map(st => (
+                                            <div 
+                                                key={st.id}
+                                                draggable
+                                                onDragStart={(e) => handleDragStartStudent(e, st.id)}
+                                                className="p-2.5 bg-slate-50 hover:bg-sky-50 border border-slate-200 hover:border-sky-300 rounded-xl text-xs font-bold text-slate-800 cursor-grab active:cursor-grabbing flex items-center justify-between transition shadow-sm"
+                                            >
+                                                <div className="truncate">
+                                                    <span className="font-mono text-sky-700 font-extrabold mr-1.5">[{st.nisn}]</span>
+                                                    <span>{st.name}</span>
+                                                </div>
+                                                <Icon name="drag" className="w-4 h-4 text-slate-400 shrink-0 ml-1" />
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Drop Trash Zone */}
+                            <div 
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDropOnTrash}
+                                className="p-4 rounded-2xl border-2 border-dashed border-rose-300 bg-rose-50/40 text-rose-800 text-center space-y-1 transition"
+                            >
+                                <Icon name="trash" className="w-6 h-6 mx-auto text-rose-600" />
+                                <div className="font-extrabold text-xs">Lepas Siswa dari PC</div>
+                                <div className="text-[10px] text-rose-600">Tarik PC terisi ke sini untuk mengosongkan tempat duduk</div>
+                            </div>
+                        </div>
+
+                        {/* Denah Grid Main Area */}
+                        <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                                <div>
+                                    <h3 className="font-extrabold text-slate-900 text-sm">Tata Letak Lab Komputer (PC-01 s/d PC-32)</h3>
+                                    <p className="text-xs text-slate-500">Grid 8 × 4. Klik kartu untuk edit rincian atau seret (drag & drop) untuk menukar tempat.</p>
+                                </div>
+                                
+                                <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-600">
+                                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Normal & Terisi</span>
+                                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-slate-300 inline-block"></span> PC Kosong</span>
+                                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500 inline-block"></span> Perlu Perbaikan</span>
+                                    <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-rose-500 inline-block"></span> Rusak / Non-aktif</span>
+                                </div>
+                            </div>
+
+                            {/* Front Screen Board */}
+                            <div className="w-full py-2 bg-slate-900 text-white text-center font-extrabold text-xs rounded-xl shadow-sm tracking-widest uppercase flex items-center justify-center gap-2 border-2 border-slate-700">
+                                <span>📺</span>
+                                <span>DEPAN LAB KOMPUTER / PAPAN TULIS & PROYEKTOR</span>
+                                <span>📺</span>
+                            </div>
+
+                            {/* 8x4 Grid Render */}
+                            <div className="space-y-4 pt-2">
+                                {gridRows.map((row) => (
+                                    <div key={row.rowNum} className="space-y-2 bg-slate-50/60 p-3 rounded-2xl border border-slate-200/80">
+                                        <div className="flex items-center justify-between px-1 text-[11px] font-extrabold text-slate-700">
+                                            <span className="bg-sky-100 text-sky-900 px-2.5 py-0.5 rounded-full border border-sky-300">
+                                                Baris {row.rowNum}
+                                            </span>
+                                            <span className="text-slate-400 font-mono text-[10px]">
+                                                8 Unit PC Per Baris
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
+                                            {row.items.map(pc => {
+                                                let cardBg = "bg-white border-slate-200 hover:border-sky-400";
+                                                let statusBadge = "bg-slate-100 text-slate-700";
+                                                let statusText = "Kosong";
+
+                                                if (pc.condition === 'broken') {
+                                                    cardBg = "bg-rose-50/50 border-rose-200 hover:border-rose-400";
+                                                    statusBadge = "bg-rose-100 text-rose-800";
+                                                    statusText = "Rusak";
+                                                } else if (pc.condition === 'maintenance') {
+                                                    cardBg = "bg-amber-50/50 border-amber-200 hover:border-amber-400";
+                                                    statusBadge = "bg-amber-100 text-amber-800";
+                                                    statusText = "Servis";
+                                                } else if (pc.student) {
+                                                    cardBg = "bg-sky-50/40 border-sky-200 hover:border-sky-500";
+                                                    statusBadge = "bg-emerald-100 text-emerald-800";
+                                                    statusText = "Terisi";
+                                                }
+
+                                                return (
+                                                    <div 
+                                                        key={pc.pcNum}
+                                                        draggable
+                                                        onDragStart={(e) => handleDragStartPc(e, pc.pcNum)}
+                                                        onDragOver={handleDragOver}
+                                                        onDragLeave={handleDragLeave}
+                                                        onDrop={(e) => handleDropOnPc(e, pc.pcNum)}
+                                                        onClick={() => openEditPc(pc)}
+                                                        className={`p-3 rounded-xl border shadow-sm transition cursor-grab active:cursor-grabbing flex flex-col justify-between min-h-[110px] relative group ${cardBg}`}
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="font-mono font-black text-xs text-slate-800">{pc.pcNum}</span>
+                                                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase ${statusBadge}`}>
+                                                                {statusText}
+                                                            </span>
+                                                        </div>
+
+                                                        <div className="my-2 text-center">
+                                                            <Icon name="pc" className={`w-7 h-7 mx-auto ${pc.student ? 'text-sky-600' : 'text-slate-300'}`} />
+                                                            <div className="font-bold text-xs text-slate-900 line-clamp-2 mt-1 leading-snug">
+                                                                {pc.student ? pc.student.name : <span className="text-slate-400 italic text-[11px]">Kosong</span>}
+                                                            </div>
+                                                            {pc.student && (
+                                                                <span className="text-[10px] font-mono font-bold text-sky-700">{pc.student.nisn}</span>
+                                                            )}
+                                                        </div>
+
+                                                        {pc.notes && (
+                                                            <div className="text-[9px] text-amber-800 bg-amber-100/80 px-1.5 py-0.5 rounded truncate font-medium" title={pc.notes}>
+                                                                ⚠️ {pc.notes}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {pcModalOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+                                <div className="flex items-center justify-between border-b pb-3">
+                                    <h3 className="font-extrabold text-slate-900 text-sm">Pengaturan Komputer {selectedPc} ({selectedClass})</h3>
+                                    <button onClick={() => setPcModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-700">
+                                        <Icon name="x" className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                <form onSubmit={savePcEdit} className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Pilih Siswa Pengguna:</label>
+                                        <select 
+                                            value={pcForm.studentId}
+                                            onChange={e => setPcForm({ ...pcForm, studentId: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        >
+                                            <option value="">-- Kosong (Tidak Digunakan) --</option>
+                                            {classStudents.map(st => (
+                                                <option key={st.id} value={st.id}>
+                                                    {st.nisn} - {st.name} ({st.gender})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Status Hardware Komputer:</label>
+                                        <select 
+                                            value={pcForm.condition}
+                                            onChange={e => setPcForm({ ...pcForm, condition: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        >
+                                            <option value="normal">✅ Normal / Siap Digunakan</option>
+                                            <option value="maintenance">⚠️ Perlu Perbaikan / Maintenance</option>
+                                            <option value="broken">❌ Rusak / Out of Order</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Catatan Spesifikasi / Masalah Lab:</label>
+                                        <textarea 
+                                            rows="2"
+                                            value={pcForm.notes}
+                                            onChange={e => setPcForm({ ...pcForm, notes: e.target.value })}
+                                            placeholder="e.g. Mouse klik kanan tidak berfungsi, keyboard tombol Space agak keras"
+                                            className="w-full p-2 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none resize-none"
+                                        />
+                                    </div>
+
+                                    <div className="flex justify-end gap-2 pt-2 border-t">
+                                        <button 
+                                            type="button"
+                                            onClick={() => setPcModalOpen(false)}
+                                            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+                                        >
+                                            Batal
+                                        </button>
+                                        <button 
+                                            type="submit"
+                                            className="px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm transition"
+                                        >
+                                            Simpan Posisi PC
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     )}
@@ -1133,8 +1695,11 @@ const analytics = getAnalytics(app);
             );
         }
 
-        function KlasemenTab({ students, scores, myClasses, tps, settings }) {
+        function KlasemenTab({ students, scores, groups, setGroups, myClasses, tps, settings, showToast }) {
             const [filterScope, setFilterScope] = useState('ALL');
+            const [viewMode, setViewMode] = useState('individual'); // 'individual' or 'group'
+            const [newGroupModal, setNewGroupModal] = useState(false);
+            const [newGroup, setNewGroup] = useState({ name: '', classId: '8A', studentIds: [] });
 
             const rankedStudents = useMemo(() => {
                 let list = students;
@@ -1154,230 +1719,42 @@ const analytics = getAnalytics(app);
                 }).sort((a, b) => b.finalScore - a.finalScore);
             }, [students, filterScope, myClasses, scores, tps, settings]);
 
-            const top3 = rankedStudents.slice(0, 3);
-
-            return (
-                <div className="space-y-6">
-                    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-                        <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Rombel / Kelas:</label>
-                            <select 
-                                value={filterScope} 
-                                onChange={e => setFilterScope(e.target.value)}
-                                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            >
-                                <option value="ALL">Semua Kelas / Angkatan</option>
-                                <option value="TINGKAT_VII">Seluruh Kelas VII</option>
-                                <option value="TINGKAT_VIII">Seluruh Kelas VIII</option>
-                                <option value="TINGKAT_IX">Seluruh Kelas IX</option>
-                                {myClasses.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    {top3.length >= 3 && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-                            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center md:mt-6 order-2 md:order-1">
-                                <div className="text-3xl mb-1">🥈</div>
-                                <div className="text-xs font-black text-slate-500 uppercase tracking-wider">Juara 2</div>
-                                <div className="font-black text-slate-900 mt-1">{top3[1].name}</div>
-                                <div className="text-xs text-slate-600 font-bold">{top3[1].classId}</div>
-                                <div className="text-2xl font-black text-sky-700 mt-2">{top3[1].finalScore}</div>
-                            </div>
-
-                            <div className="bg-gradient-to-b from-amber-50 to-white p-6 rounded-2xl border-2 border-amber-300 shadow-md text-center order-1 md:order-2 transform md:-translate-y-2">
-                                <div className="text-4xl mb-1">🥇</div>
-                                <div className="text-xs font-black text-amber-800 uppercase tracking-wider">Juara 1 (Bintang Pelajar)</div>
-                                <div className="font-black text-slate-900 text-lg mt-1">{top3[0].name}</div>
-                                <div className="text-xs text-slate-600 font-bold">{top3[0].classId}</div>
-                                <div className="text-3xl font-black text-amber-700 mt-2">{top3[0].finalScore}</div>
-                            </div>
-
-                            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center md:mt-8 order-3">
-                                <div className="text-3xl mb-1">🥉</div>
-                                <div className="text-xs font-black text-amber-900 uppercase tracking-wider">Juara 3</div>
-                                <div className="font-black text-slate-900 mt-1">{top3[2].name}</div>
-                                <div className="text-xs text-slate-600 font-bold">{top3[2].classId}</div>
-                                <div className="text-2xl font-black text-amber-900 mt-2">{top3[2].finalScore}</div>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                        <table className="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr className="bg-slate-100 text-slate-800 font-bold uppercase">
-                                    <th className="py-3 px-4">Peringkat</th>
-                                    <th className="py-3 px-4">No. Absen</th>
-                                    <th className="py-3 px-4">Nama Siswa</th>
-                                    <th className="py-3 px-3">Kelas</th>
-                                    <th className="py-3 px-3 text-center">Nilai Akhir</th>
-                                    <th className="py-3 px-3 text-center">Predikat</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {rankedStudents.map((st, idx) => (
-                                    <tr key={st.id} className="hover:bg-slate-50">
-                                        <td className="py-3 px-4 font-black text-slate-800">#{idx + 1}</td>
-                                        <td className="py-3 px-4 font-mono font-bold text-slate-700">{st.nisn}</td>
-                                        <td className="py-3 px-4 font-bold text-slate-900">{st.name}</td>
-                                        <td className="py-3 px-3 font-bold text-slate-700">{st.classId}</td>
-                                        <td className="py-3 px-3 text-center font-black text-sky-800 text-sm">{st.finalScore}</td>
-                                        <td className="py-3 px-3 text-center font-extrabold">{st.predicate}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            );
-        }
-
-        function PcLabTab({ students, pcData, setPcData, myClasses, selectedClass, setSelectedClass, attendance, showToast }) {
-            const TOTAL_PCS = 32;
-            const [selectedPc, setSelectedPc] = useState(null);
-            const [pcModalOpen, setPcModalOpen] = useState(false);
-            const [pcForm, setPcForm] = useState({ studentId: '', condition: 'normal', notes: '' });
-
-            const classStudents = useMemo(() => students.filter(s => s.classId === selectedClass), [students, selectedClass]);
-            const currentClassPc = pcData[selectedClass] || {};
-
-            const pcList = useMemo(() => {
-                const list = [];
-                for (let i = 1; i <= TOTAL_PCS; i++) {
-                    const pcNum = `PC-${i < 10 ? '0' + i : i}`;
-                    const assign = currentClassPc[pcNum] || { studentId: '', condition: 'normal', notes: '' };
-                    const student = students.find(s => s.id === assign.studentId);
-                    list.push({ pcNum, ...assign, student });
-                }
-                return list;
-            }, [currentClassPc, students]);
-
-            // Formasi Denah Mengular (Serpentine Grid 8x4)
-            const gridRows = useMemo(() => {
-                const rows = [];
-                for (let r = 0; r < 4; r++) {
-                    const rowItems = pcList.slice(r * 8, (r + 1) * 8);
-                    if (r % 2 === 0) {
-                        // Baris Genap (Baris 1 & 3): Dari Kanan ke Kiri (PC-01 di Paling Kanan, PC-17 di Paling Kanan)
-                        rows.push({
-                            rowNum: r + 1,
-                            directionLabel: 'Kanan ke Kiri ◀',
-                            items: [...rowItems].reverse()
-                        });
+            const rankedGroups = useMemo(() => {
+                let list = groups || [];
+                if (filterScope !== 'ALL') {
+                    if (filterScope.startsWith('TINGKAT_')) {
+                        const lvl = filterScope.replace('TINGKAT_', '');
+                        const classIdsInLvl = myClasses.filter(c => c.level === lvl).map(c => c.id);
+                        list = list.filter(g => classIdsInLvl.includes(g.classId));
                     } else {
-                        // Baris Ganjil (Baris 2 & 4): Dari Kiri ke Kanan (PC-09 di Kiri belakang PC-08, PC-25 di Kiri belakang PC-24)
-                        rows.push({
-                            rowNum: r + 1,
-                            directionLabel: 'Kiri ke Kanan ▶',
-                            items: rowItems
-                        });
+                        list = list.filter(g => g.classId === filterScope);
                     }
                 }
-                return rows;
-            }, [pcList]);
+                return [...list].sort((a, b) => b.points - a.points);
+            }, [groups, filterScope, myClasses]);
 
-            const stats = useMemo(() => {
-                let assigned = 0;
-                let empty = 0;
-                let maintenance = 0;
-                let broken = 0;
+            const top3Students = rankedStudents.slice(0, 3);
+            const top3Groups = rankedGroups.slice(0, 3);
 
-                pcList.forEach(pc => {
-                    if (pc.studentId) assigned++;
-                    else empty++;
-                    if (pc.condition === 'maintenance') maintenance++;
-                    if (pc.condition === 'broken') broken++;
-                });
-
-                return { assigned, empty, maintenance, broken, total: TOTAL_PCS };
-            }, [pcList]);
-
-            const handleAutoPlot = () => {
-                setPcData(prev => {
-                    const updated = { ...prev };
-                    if (!updated[selectedClass]) updated[selectedClass] = {};
-                    
-                    classStudents.forEach((st, idx) => {
-                        if (idx < TOTAL_PCS) {
-                            const pcNum = `PC-${idx + 1 < 10 ? '0' + (idx + 1) : idx + 1}`;
-                            const existingCond = (updated[selectedClass][pcNum] && updated[selectedClass][pcNum].condition) || 'normal';
-                            const existingNotes = (updated[selectedClass][pcNum] && updated[selectedClass][pcNum].notes) || '';
-                            updated[selectedClass][pcNum] = {
-                                studentId: st.id,
-                                condition: existingCond,
-                                notes: existingNotes
-                            };
-                        }
-                    });
-                    return updated;
-                });
-                showToast(`Auto-plotting ${Math.min(classStudents.length, TOTAL_PCS)} siswa kelas ${selectedClass} ke PC-01 s/d PC-${Math.min(classStudents.length, TOTAL_PCS)} berhasil!`);
+            const handleAddPoints = (groupId, delta) => {
+                setGroups(prev => prev.map(g => g.id === groupId ? { ...g, points: Math.max(0, g.points + delta) } : g));
+                showToast(`Poin kelompok berhasil diperbarui! (${delta > 0 ? '+' : ''}${delta})`);
             };
 
-            const handleResetPlot = () => {
-                setPcData(prev => {
-                    const updated = { ...prev };
-                    updated[selectedClass] = {};
-                    return updated;
-                });
-                showToast(`Plotting PC untuk kelas ${selectedClass} telah dikosongkan!`);
-            };
-
-            const openEditPc = (pc) => {
-                setSelectedPc(pc.pcNum);
-                setPcForm({
-                    studentId: pc.studentId || '',
-                    condition: pc.condition || 'normal',
-                    notes: pc.notes || ''
-                });
-                setPcModalOpen(true);
-            };
-
-            const savePcEdit = (e) => {
+            const handleCreateGroup = (e) => {
                 e.preventDefault();
-                setPcData(prev => {
-                    const updated = { ...prev };
-                    if (!updated[selectedClass]) updated[selectedClass] = {};
-                    updated[selectedClass][selectedPc] = { ...pcForm };
-                    return updated;
-                });
-                setPcModalOpen(false);
-                showToast(`Pengaturan Komputer ${selectedPc} berhasil diperbarui!`);
-            };
-
-            const exportPcPDF = () => {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({ orientation: 'landscape' });
-
-                doc.setFontSize(14);
-                doc.text("DENAH POSISI KOMPUTER CLIENT SISWA (LAB KOMPUTER)", 14, 15);
-                doc.setFontSize(10);
-                doc.text(`Kelas: ${selectedClass} | Total Komputer: ${TOTAL_PCS} Unit | Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 22);
-
-                const headCols = ["No. PC", "Siswa Terpasang", "No. Absen / ID", "L/P", "Kondisi Perangkat", "Catatan Lab"];
-                const bodyRows = pcList.map(pc => [
-                    pc.pcNum,
-                    pc.student ? pc.student.name : '(Kosong / Tidak Digunakan)',
-                    pc.student ? pc.student.nisn : '-',
-                    pc.student ? pc.student.gender : '-',
-                    pc.condition === 'normal' ? 'Baik / Normal' : pc.condition === 'maintenance' ? 'Perlu Perbaikan' : 'Rusak / Non-aktif',
-                    pc.notes || '-'
-                ]);
-
-                doc.autoTable({
-                    startY: 28,
-                    head: [headCols],
-                    body: bodyRows,
-                    theme: 'grid',
-                    headStyles: { fillColor: [2, 132, 199] },
-                    styles: { fontSize: 8 }
-                });
-
-                doc.save(`Denah_Lab_Komputer_${selectedClass}.pdf`);
-                showToast(`PDF Denah Komputer Lab (${selectedClass}) berhasil diunduh!`);
+                if (!newGroup.name.trim()) return;
+                const created = {
+                    id: 'grp-' + Date.now(),
+                    name: newGroup.name.trim(),
+                    classId: newGroup.classId,
+                    points: 0,
+                    studentIds: newGroup.studentIds
+                };
+                setGroups(prev => [...prev, created]);
+                setNewGroup({ name: '', classId: '8A', studentIds: [] });
+                setNewGroupModal(false);
+                showToast(`Kelompok ${created.name} berhasil dibuat!`);
             };
 
             return (
@@ -1387,10 +1764,14 @@ const analytics = getAnalytics(app);
                             <div>
                                 <label className="block text-xs font-semibold text-slate-700 mb-1">Pilih Rombel / Kelas:</label>
                                 <select 
-                                    value={selectedClass} 
-                                    onChange={e => setSelectedClass(e.target.value)}
+                                    value={filterScope} 
+                                    onChange={e => setFilterScope(e.target.value)}
                                     className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
                                 >
+                                    <option value="ALL">Semua Kelas / Angkatan</option>
+                                    <option value="TINGKAT_VII">Seluruh Kelas VII</option>
+                                    <option value="TINGKAT_VIII">Seluruh Kelas VIII</option>
+                                    <option value="TINGKAT_IX">Seluruh Kelas IX</option>
                                     {myClasses.map(c => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
@@ -1398,223 +1779,185 @@ const analytics = getAnalytics(app);
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
                             <button 
-                                onClick={handleAutoPlot}
-                                className="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
-                                title="Plotting otomatis berdasarkan urutan daftar siswa"
+                                onClick={() => setViewMode('individual')}
+                                className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${viewMode === 'individual' ? 'bg-white text-sky-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                             >
-                                <Icon name="check" className="w-4 h-4" />
-                                <span>⚡ Auto-Plot Urut Absen</span>
+                                <Icon name="students" className="w-4 h-4" />
+                                <span>Klasemen Individu</span>
                             </button>
-
                             <button 
-                                onClick={handleResetPlot}
-                                className="px-3.5 py-2 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 border border-slate-200 font-bold text-xs rounded-xl transition flex items-center gap-1.5"
+                                onClick={() => setViewMode('group')}
+                                className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${viewMode === 'group' ? 'bg-white text-sky-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                             >
-                                <Icon name="reset" className="w-4 h-4" />
-                                <span>Kosongkan Plot</span>
-                            </button>
-
-                            <button 
-                                onClick={exportPcPDF}
-                                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
-                            >
-                                <Icon name="pdf" className="w-4 h-4" />
-                                <span>Cetak Denah PDF</span>
+                                <Icon name="users" className="w-4 h-4" />
+                                <span>Klasemen Kelompok (Poin)</span>
                             </button>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-                            <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Komputer</p>
-                                <h4 className="text-xl font-extrabold text-slate-900 mt-0.5">{stats.total} PC</h4>
-                            </div>
-                            <div className="p-2.5 bg-slate-100 text-slate-700 rounded-xl">
-                                <Icon name="pc" className="w-5 h-5" />
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-                            <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Siswa Terpasang</p>
-                                <h4 className="text-xl font-extrabold text-sky-700 mt-0.5">{stats.assigned} Siswa</h4>
-                            </div>
-                            <div className="p-2.5 bg-sky-50 text-sky-700 rounded-xl">
-                                <Icon name="students" className="w-5 h-5" />
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-                            <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">PC Kosong</p>
-                                <h4 className="text-xl font-extrabold text-slate-600 mt-0.5">{stats.empty} Unit</h4>
-                            </div>
-                            <div className="p-2.5 bg-slate-50 text-slate-500 rounded-xl">
-                                <Icon name="pc" className="w-5 h-5" />
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
-                            <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Perlu Perbaikan</p>
-                                <h4 className="text-xl font-extrabold text-amber-700 mt-0.5">{stats.maintenance + stats.broken} Unit</h4>
-                            </div>
-                            <div className="p-2.5 bg-amber-50 text-amber-700 rounded-xl">
-                                <Icon name="settings" className="w-5 h-5" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                            <div>
-                                <h3 className="font-extrabold text-slate-900 text-sm">Tata Letak Mengular Client Lab (PC-01 s/d PC-32)</h3>
-                                <p className="text-xs text-slate-500">Urutan mengular: PC-01 di kanan depan ➔ PC-08 di kiri depan ➔ PC-09 di belakang PC-08 ➔ PC-16 di kanan.</p>
-                            </div>
-                            
-                            <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-600">
-                                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Normal & Terisi</span>
-                                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-slate-300 inline-block"></span> PC Kosong</span>
-                                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500 inline-block"></span> Perlu Perbaikan</span>
-                                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-rose-500 inline-block"></span> Rusak / Non-aktif</span>
-                            </div>
-                        </div>
-
-                        {/* Indikator Papan Tulis / Depan Lab */}
-                        <div className="w-full py-2.5 bg-slate-900 text-white text-center font-extrabold text-xs rounded-xl shadow-sm tracking-widest uppercase flex items-center justify-center gap-2 border-2 border-slate-700">
-                            <span>📺</span>
-                            <span>DEPAN LAB KOMPUTER / PAPAN TULIS & PROYEKTOR</span>
-                            <span>📺</span>
-                        </div>
-
-                        {/* Rendering Baris Mengular */}
-                        <div className="space-y-4 pt-2">
-                            {gridRows.map((row) => (
-                                <div key={row.rowNum} className="space-y-2 bg-slate-50/60 p-3 rounded-2xl border border-slate-200/80">
-                                    <div className="flex items-center justify-between px-1 text-[11px] font-extrabold text-slate-700">
-                                        <span className="bg-sky-100 text-sky-900 px-2.5 py-0.5 rounded-full border border-sky-300">
-                                            Baris {row.rowNum}
-                                        </span>
-                                        <span className="text-slate-500 font-mono text-[10px]">
-                                            Arah Alur: <strong className="text-slate-800">{row.directionLabel}</strong>
-                                        </span>
+                    {viewMode === 'individual' ? (
+                        <>
+                            {top3Students.length >= 3 && (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center md:mt-6 order-2 md:order-1">
+                                        <div className="text-3xl mb-1">🥈</div>
+                                        <div className="text-xs font-black text-slate-500 uppercase tracking-wider">Juara 2</div>
+                                        <div className="font-black text-slate-900 mt-1">{top3Students[1].name}</div>
+                                        <div className="text-xs text-slate-600 font-bold">{top3Students[1].classId}</div>
+                                        <div className="text-2xl font-black text-sky-700 mt-2">{top3Students[1].finalScore}</div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
-                                        {row.items.map(pc => {
-                                            let cardBg = "bg-white border-slate-200 hover:border-sky-400";
-                                            let statusBadge = "bg-slate-100 text-slate-700";
-                                            let statusText = "Kosong";
+                                    <div className="bg-gradient-to-b from-amber-50 to-white p-6 rounded-2xl border-2 border-amber-300 shadow-md text-center order-1 md:order-2 transform md:-translate-y-2">
+                                        <div className="text-4xl mb-1">🥇</div>
+                                        <div className="text-xs font-black text-amber-800 uppercase tracking-wider">Juara 1 (Bintang Pelajar)</div>
+                                        <div className="font-black text-slate-900 text-lg mt-1">{top3Students[0].name}</div>
+                                        <div className="text-xs text-slate-600 font-bold">{top3Students[0].classId}</div>
+                                        <div className="text-3xl font-black text-amber-700 mt-2">{top3Students[0].finalScore}</div>
+                                    </div>
 
-                                            if (pc.condition === 'broken') {
-                                                cardBg = "bg-rose-50/50 border-rose-200 hover:border-rose-400";
-                                                statusBadge = "bg-rose-100 text-rose-800";
-                                                statusText = "Rusak";
-                                            } else if (pc.condition === 'maintenance') {
-                                                cardBg = "bg-amber-50/50 border-amber-200 hover:border-amber-400";
-                                                statusBadge = "bg-amber-100 text-amber-800";
-                                                statusText = "Servis";
-                                            } else if (pc.student) {
-                                                cardBg = "bg-sky-50/40 border-sky-200 hover:border-sky-500";
-                                                statusBadge = "bg-emerald-100 text-emerald-800";
-                                                statusText = "Terisi";
-                                            }
-
-                                            return (
-                                                <div 
-                                                    key={pc.pcNum}
-                                                    onClick={() => openEditPc(pc)}
-                                                    className={`p-3 rounded-xl border shadow-sm transition cursor-pointer flex flex-col justify-between min-h-[110px] relative group ${cardBg}`}
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="font-mono font-black text-xs text-slate-800">{pc.pcNum}</span>
-                                                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase ${statusBadge}`}>
-                                                            {statusText}
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="my-2 text-center">
-                                                        <Icon name="pc" className={`w-7 h-7 mx-auto ${pc.student ? 'text-sky-600' : 'text-slate-300'}`} />
-                                                        <div className="font-bold text-xs text-slate-900 line-clamp-2 mt-1 leading-snug">
-                                                            {pc.student ? pc.student.name : <span className="text-slate-400 italic text-[11px]">Kosong</span>}
-                                                        </div>
-                                                        {pc.student && (
-                                                            <span className="text-[10px] font-mono font-bold text-sky-700">{pc.student.nisn}</span>
-                                                        )}
-                                                    </div>
-
-                                                    {pc.notes && (
-                                                        <div className="text-[9px] text-amber-800 bg-amber-100/80 px-1.5 py-0.5 rounded truncate font-medium" title={pc.notes}>
-                                                            ⚠️ {pc.notes}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
+                                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center md:mt-8 order-3">
+                                        <div className="text-3xl mb-1">🥉</div>
+                                        <div className="text-xs font-black text-amber-900 uppercase tracking-wider">Juara 3</div>
+                                        <div className="font-black text-slate-900 mt-1">{top3Students[2].name}</div>
+                                        <div className="text-xs text-slate-600 font-bold">{top3Students[2].classId}</div>
+                                        <div className="text-2xl font-black text-amber-900 mt-2">{top3Students[2].finalScore}</div>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
+                            )}
 
-                    {pcModalOpen && (
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                                <table className="w-full text-left border-collapse text-xs">
+                                    <thead>
+                                        <tr className="bg-slate-100 text-slate-800 font-bold uppercase">
+                                            <th className="py-3 px-4">Peringkat</th>
+                                            <th className="py-3 px-4">No. Absen</th>
+                                            <th className="py-3 px-4">Nama Siswa</th>
+                                            <th className="py-3 px-3">Kelas</th>
+                                            <th className="py-3 px-3 text-center">Nilai Akhir</th>
+                                            <th className="py-3 px-3 text-center">Predikat</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {rankedStudents.map((st, idx) => (
+                                            <tr key={st.id} className="hover:bg-slate-50">
+                                                <td className="py-3 px-4 font-black text-slate-800">#{idx + 1}</td>
+                                                <td className="py-3 px-4 font-mono font-bold text-slate-700">{st.nisn}</td>
+                                                <td className="py-3 px-4 font-bold text-slate-900">{st.name}</td>
+                                                <td className="py-3 px-3 font-bold text-slate-700">{st.classId}</td>
+                                                <td className="py-3 px-3 text-center font-black text-sky-800 text-sm">{st.finalScore}</td>
+                                                <td className="py-3 px-3 text-center font-extrabold">{st.predicate}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex justify-end">
+                                <button 
+                                    onClick={() => setNewGroupModal(true)}
+                                    className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
+                                >
+                                    <Icon name="plus" className="w-4 h-4" />
+                                    <span>Buat Kelompok Baru</span>
+                                </button>
+                            </div>
+
+                            {top3Groups.length > 0 && (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                                    {top3Groups.map((g, idx) => (
+                                        <div key={g.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-2xl">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</span>
+                                                <span className="px-2 py-0.5 bg-sky-100 text-sky-800 font-bold text-[10px] rounded-full">{g.classId}</span>
+                                            </div>
+                                            <h4 className="font-extrabold text-slate-900 text-sm">{g.name}</h4>
+                                            <div className="text-2xl font-black text-sky-700">{g.points} Poin</div>
+                                            <div className="pt-2 border-t flex items-center justify-between">
+                                                <span className="text-xs text-slate-500 font-medium">Beri Poin:</span>
+                                                <div className="flex gap-1">
+                                                    <button onClick={() => handleAddPoints(g.id, 5)} className="px-2 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded hover:bg-emerald-200">+5</button>
+                                                    <button onClick={() => handleAddPoints(g.id, 10)} className="px-2 py-1 bg-sky-100 text-sky-800 font-bold text-xs rounded hover:bg-sky-200">+10</button>
+                                                    <button onClick={() => handleAddPoints(g.id, -5)} className="px-2 py-1 bg-rose-100 text-rose-800 font-bold text-xs rounded hover:bg-rose-200">-5</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                                <table className="w-full text-left border-collapse text-xs">
+                                    <thead>
+                                        <tr className="bg-slate-100 text-slate-800 font-bold uppercase">
+                                            <th className="py-3 px-4">Peringkat</th>
+                                            <th className="py-3 px-4">Nama Kelompok</th>
+                                            <th className="py-3 px-3">Kelas</th>
+                                            <th className="py-3 px-3 text-center">Total Poin</th>
+                                            <th className="py-3 px-4 text-center">Aksi Poin</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {rankedGroups.map((g, idx) => (
+                                            <tr key={g.id} className="hover:bg-slate-50">
+                                                <td className="py-3 px-4 font-black text-slate-800">#{idx + 1}</td>
+                                                <td className="py-3 px-4 font-bold text-slate-900">{g.name}</td>
+                                                <td className="py-3 px-3 font-bold text-slate-700">{g.classId}</td>
+                                                <td className="py-3 px-3 text-center font-black text-sky-800 text-sm">{g.points}</td>
+                                                <td className="py-3 px-4 text-center">
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <button onClick={() => handleAddPoints(g.id, 5)} className="px-2 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded hover:bg-emerald-200">+5</button>
+                                                        <button onClick={() => handleAddPoints(g.id, 10)} className="px-2 py-1 bg-sky-100 text-sky-800 font-bold text-xs rounded hover:bg-sky-200">+10</button>
+                                                        <button onClick={() => handleAddPoints(g.id, -5)} className="px-2 py-1 bg-rose-100 text-rose-800 font-bold text-xs rounded hover:bg-rose-200">-5</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
+                    )}
+
+                    {newGroupModal && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
                             <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100">
                                 <div className="flex items-center justify-between border-b pb-3">
-                                    <h3 className="font-extrabold text-slate-900 text-sm">Pengaturan Komputer {selectedPc} ({selectedClass})</h3>
-                                    <button onClick={() => setPcModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-700">
+                                    <h3 className="font-extrabold text-slate-900 text-sm">Buat Kelompok Praktikum Baru</h3>
+                                    <button onClick={() => setNewGroupModal(false)} className="p-1 text-slate-400 hover:text-slate-700">
                                         <Icon name="x" className="w-5 h-5" />
                                     </button>
                                 </div>
-
-                                <form onSubmit={savePcEdit} className="space-y-4">
+                                <form onSubmit={handleCreateGroup} className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-700 mb-1">Pilih Siswa Pengguna:</label>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Nama Kelompok:</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="e.g. Kelompok Cyber 1"
+                                            value={newGroup.name}
+                                            onChange={e => setNewGroup({ ...newGroup, name: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Rombel / Kelas:</label>
                                         <select 
-                                            value={pcForm.studentId}
-                                            onChange={e => setPcForm({ ...pcForm, studentId: e.target.value })}
+                                            value={newGroup.classId}
+                                            onChange={e => setNewGroup({ ...newGroup, classId: e.target.value })}
                                             className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
                                         >
-                                            <option value="">-- Kosong (Tidak Digunakan) --</option>
-                                            {classStudents.map(st => (
-                                                <option key={st.id} value={st.id}>
-                                                    {st.nisn} - {st.name} ({st.gender})
-                                                </option>
+                                            {myClasses.map(c => (
+                                                <option key={c.id} value={c.id}>{c.name}</option>
                                             ))}
                                         </select>
                                     </div>
-
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-700 mb-1">Status Hardware Komputer:</label>
-                                        <select 
-                                            value={pcForm.condition}
-                                            onChange={e => setPcForm({ ...pcForm, condition: e.target.value })}
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                                        >
-                                            <option value="normal">✅ Normal / Siap Digunakan</option>
-                                            <option value="maintenance">⚠️ Perlu Perbaikan / Maintenance</option>
-                                            <option value="broken">❌ Rusak / Out of Order</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-700 mb-1">Catatan Spesifikasi / Masalah Lab:</label>
-                                        <textarea 
-                                            rows="2"
-                                            value={pcForm.notes}
-                                            onChange={e => setPcForm({ ...pcForm, notes: e.target.value })}
-                                            placeholder="e.g. Mouse klik kanan tidak berfungsi, keyboard tombol Space agak keras"
-                                            className="w-full p-2 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none resize-none"
-                                        />
-                                    </div>
-
                                     <div className="flex justify-end gap-2 pt-2 border-t">
                                         <button 
                                             type="button"
-                                            onClick={() => setPcModalOpen(false)}
+                                            onClick={() => setNewGroupModal(false)}
                                             className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
                                         >
                                             Batal
@@ -1623,7 +1966,7 @@ const analytics = getAnalytics(app);
                                             type="submit"
                                             className="px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm transition"
                                         >
-                                            Simpan Posisi PC
+                                            Simpan Kelompok
                                         </button>
                                     </div>
                                 </form>
@@ -2491,6 +2834,11 @@ const analytics = getAnalytics(app);
                 return saved ? JSON.parse(saved) : INITIAL_SCORES;
             });
 
+            const [groups, setGroups] = useState(() => {
+                const saved = localStorage.getItem('simadrasah_groups');
+                return saved ? JSON.parse(saved) : INITIAL_GROUPS;
+            });
+
             const [attendance, setAttendance] = useState(() => {
                 const saved = localStorage.getItem('simadrasah_attendance');
                 return saved ? JSON.parse(saved) : INITIAL_ATTENDANCE;
@@ -2531,22 +2879,22 @@ const analytics = getAnalytics(app);
             }, []);
 
             const saveToCloud = useCallback(async (dataToSync) => {
-                if (!window.FirebaseCloud || !user || !isCloudReady) return;
+                if (!window.FirebaseCloud || !isCloudReady) return;
                 try {
                     setSyncStatus('Saving...');
                     const { db, doc, setDoc, appId } = window.FirebaseCloud;
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'simadrasah', 'main_data');
+                    const docRef = doc(db, 'simadrasah_records', 'main_data');
                     await setDoc(docRef, { ...dataToSync, lastUpdated: new Date().toISOString() }, { merge: true });
                     setSyncStatus('Synced');
                 } catch (err) {
-                    console.warn("Cloud Save warning (permission/network):", err.message || err);
+                    console.warn("Cloud Save warning (fallback to Local):", err.message || err);
                     setSyncStatus('Local Only');
                 }
-            }, [user, isCloudReady]);
+            }, [isCloudReady]);
 
             useEffect(() => {
                 if (window.FirebaseCloud) {
-                    const { auth, signInAnonymously, signInWithCustomToken, onSnapshot, doc, db, appId } = window.FirebaseCloud;
+                    const { auth, signInAnonymously, signInWithCustomToken, onSnapshot, doc, db } = window.FirebaseCloud;
                     
                     const authenticate = async () => {
                         try {
@@ -2563,9 +2911,9 @@ const analytics = getAnalytics(app);
                     authenticate().then(res => {
                         setUser(res.user);
                         setIsCloudReady(true);
-                        setSyncStatus('Cloud Ready');
+                        setSyncStatus('Synced');
                         
-                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'simadrasah', 'main_data');
+                        const docRef = doc(db, 'simadrasah_records', 'main_data');
                         onSnapshot(docRef, 
                             (snapshot) => {
                                 if (snapshot.exists()) {
@@ -2576,6 +2924,7 @@ const analytics = getAnalytics(app);
                                     if (cData.tps) setTps(cData.tps);
                                     if (cData.students) setStudents(cData.students);
                                     if (cData.scores) setScores(cData.scores);
+                                    if (cData.groups) setGroups(cData.groups);
                                     if (cData.attendance) setAttendance(cData.attendance);
                                     if (cData.pcData) setPcData(cData.pcData);
                                     setSyncStatus('Synced');
@@ -2604,16 +2953,17 @@ const analytics = getAnalytics(app);
                 localStorage.setItem('simadrasah_tps', JSON.stringify(tps));
                 localStorage.setItem('simadrasah_students', JSON.stringify(students));
                 localStorage.setItem('simadrasah_scores', JSON.stringify(scores));
+                localStorage.setItem('simadrasah_groups', JSON.stringify(groups));
                 localStorage.setItem('simadrasah_attendance', JSON.stringify(attendance));
                 localStorage.setItem('simadrasah_pcdata', JSON.stringify(pcData));
 
-                if (isCloudReady && user) {
+                if (isCloudReady) {
                     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
                     saveTimeoutRef.current = setTimeout(() => {
-                        saveToCloud({ teacher, settings, myClasses, tps, students, scores, attendance, pcData });
+                        saveToCloud({ teacher, settings, myClasses, tps, students, scores, groups, attendance, pcData });
                     }, 1500);
                 }
-            }, [teacher, settings, myClasses, tps, students, scores, attendance, pcData, isCloudReady, user, saveToCloud]);
+            }, [teacher, settings, myClasses, tps, students, scores, groups, attendance, pcData, isCloudReady, saveToCloud]);
 
             const navItems = [
                 { id: 'dashboard', label: 'Dashboard Utama', icon: 'dashboard' },
@@ -2675,13 +3025,13 @@ const analytics = getAnalytics(app);
                                 <div className="text-xs space-y-1">
                                     <p className="font-bold text-slate-200 truncate">{teacher.name}</p>
                                     <p className="text-[10px] text-slate-400 truncate">{teacher.school}</p>
-                                    <div className="pt-2 flex items-center gap-1.5 text-[10px] text-emerald-400">
+                                    <div className="pt-2 flex items-center gap-1.5 text-[10px] text-emerald-400 font-bold">
                                         <Icon name="cloud" className="w-3.5 h-3.5" />
-                                        <span>{syncStatus}</span>
+                                        <span>{syncStatus === 'Synced' ? '🟢 Synced (Firebase)' : '⚪ Local Only'}</span>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex justify-center text-emerald-400">
+                                <div className="flex justify-center text-emerald-400" title={syncStatus}>
                                     <Icon name="cloud" className="w-5 h-5" />
                                 </div>
                             )}
@@ -2729,7 +3079,7 @@ const analytics = getAnalytics(app);
                                 <RdmExportTab students={students} scores={scores} attendance={attendance} myClasses={myClasses} tps={tps} settings={settings} teacher={teacher} activeYear={activeYear} activeSemester={activeSemester} showToast={showToast} />
                             )}
                             {activeTab === 'klasemen' && (
-                                <KlasemenTab students={students} scores={scores} myClasses={myClasses} tps={tps} settings={settings} />
+                                <KlasemenTab students={students} scores={scores} groups={groups} setGroups={setGroups} myClasses={myClasses} tps={tps} settings={settings} showToast={showToast} />
                             )}
                             {activeTab === 'siswa' && (
                                 <StudentManagementTab students={students} setStudents={setStudents} setScores={setScores} setAttendance={setAttendance} myClasses={myClasses} selectedClass={selectedClass} setSelectedClass={setSelectedClass} showToast={showToast} triggerConfirm={triggerConfirm} />
