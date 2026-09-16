@@ -3359,9 +3359,9 @@
 
             const [adminPassword, setAdminPassword] = useState(() => {
                 try {
-                    return localStorage.getItem('simadrasah_admin_password') || 'admin123';
+                    return localStorage.getItem('simadrasah_admin_password') || 'Kangguru00';
                 } catch(e) {
-                    return 'admin123';
+                    return 'Kangguru00';
                 }
             });
 
@@ -3791,9 +3791,7 @@
                                     </button>
                                 </form>
 
-                                <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-600">
-                                    💡 <span className="font-semibold">Password Default:</span> <code className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-mono font-bold">admin123</code>
-                                </div>
+                               
                             </div>
                         </div>
                     )}
