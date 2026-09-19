@@ -2725,7 +2725,7 @@
 
             const handleResetAllDatabase = (e) => {
                 e.preventDefault();
-                if (resetPasswordInput !== 'Kangguru00') {
+                if (resetPasswordInput !== 'admin123') {
                     showToast('Kata sandi konfirmasi salah! Database tidak dihapus.', 'error');
                     return;
                 }
@@ -3359,9 +3359,9 @@
 
             const [adminPassword, setAdminPassword] = useState(() => {
                 try {
-                    return localStorage.getItem('simadrasah_admin_password') || 'Kangguru00';
+                    return localStorage.getItem('simadrasah_admin_password') || 'admin123';
                 } catch(e) {
-                    return 'Kangguru00';
+                    return 'admin123';
                 }
             });
 
