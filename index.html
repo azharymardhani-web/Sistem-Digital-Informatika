@@ -88,8 +88,8 @@
             projectId: "informatica-class",
             storageBucket: "informatica-class.firebasestorage.app",
             messagingSenderId: "352869091816",
-            appId: "1:352869091816:web:63927391e58ece712bbc5d",
-            measurementId: "G-YCBJP7YFQF"
+            appId: "1:352869091816:web:db2b72fca4d97c142bbc5d",
+            measurementId: "G-PX38SBS7VS"
         };
 
         try {
@@ -2725,7 +2725,7 @@
 
             const handleResetAllDatabase = (e) => {
                 e.preventDefault();
-                if (resetPasswordInput !== 'admin123') {
+                if (resetPasswordInput !== 'Kangguru00') {
                     showToast('Kata sandi konfirmasi salah! Database tidak dihapus.', 'error');
                     return;
                 }
@@ -3498,8 +3498,10 @@
             const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
 
             const [isCloudReady, setIsCloudReady] = useState(false);
+            const [hasLoadedFromCloud, setHasLoadedFromCloud] = useState(false);
+            const isUpdatingFromCloudRef = useRef(false);
             const [user, setUser] = useState(null);
-            const [syncStatus, setSyncStatus] = useState('Cloud Ready');
+            const [syncStatus, setSyncStatus] = useState('Connecting...');
 
             const saveTimeoutRef = useRef(null);
 
@@ -3558,7 +3560,6 @@
                     authenticate().then(res => {
                         setUser(res.user);
                         setIsCloudReady(true);
-                        setSyncStatus('Synced');
                         
                         let docRef;
                         try {
@@ -3569,6 +3570,7 @@
 
                         onSnapshot(docRef, 
                             (snapshot) => {
+                                isUpdatingFromCloudRef.current = true;
                                 if (snapshot && snapshot.exists()) {
                                     const cData = snapshot.data();
                                     if (cData.teacher) setTeacher(cData.teacher);
@@ -3582,21 +3584,28 @@
                                     if (cData.pcData) setPcData(cData.pcData);
                                     if (cData.activeYear) setActiveYear(cData.activeYear);
                                     if (cData.activeSemester) setActiveSemester(cData.activeSemester);
-                                    setSyncStatus('Synced');
                                 }
+                                setHasLoadedFromCloud(true);
+                                setSyncStatus('Synced');
+                                setTimeout(() => {
+                                    isUpdatingFromCloudRef.current = false;
+                                }, 300);
                             },
                             (error) => {
                                 console.warn("Firestore snapshot listener permission error, fallback to Local Mode:", error.message);
                                 setIsCloudReady(false);
+                                setHasLoadedFromCloud(true);
                                 setSyncStatus('Local Only');
                             }
                         );
                     }).catch((err) => {
                         console.warn("Cloud connection error, fallback to Local Mode:", err.message);
                         setIsCloudReady(false);
+                        setHasLoadedFromCloud(true);
                         setSyncStatus('Local Only');
                     });
                 } else {
+                    setHasLoadedFromCloud(true);
                     setSyncStatus('Local Only');
                 }
             }, []);
@@ -3612,13 +3621,13 @@
                 localStorage.setItem('simadrasah_attendance', JSON.stringify(attendance));
                 localStorage.setItem('simadrasah_pcdata', JSON.stringify(pcData));
 
-                if (isCloudReady) {
+                if (isCloudReady && hasLoadedFromCloud && !isUpdatingFromCloudRef.current) {
                     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
                     saveTimeoutRef.current = setTimeout(() => {
                         saveToCloud({ teacher, settings, myClasses, tps, students, scores, groups, attendance, pcData, activeYear, activeSemester });
                     }, 1500);
                 }
-            }, [teacher, settings, myClasses, tps, students, scores, groups, attendance, pcData, activeYear, activeSemester, isCloudReady, saveToCloud]);
+            }, [teacher, settings, myClasses, tps, students, scores, groups, attendance, pcData, activeYear, activeSemester, isCloudReady, hasLoadedFromCloud, saveToCloud]);
 
             const navItems = [
                 { id: 'dashboard', label: 'Dashboard Utama', icon: 'dashboard' },
@@ -3791,7 +3800,9 @@
                                     </button>
                                 </form>
 
-                               
+                                <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-600">
+                                    💡 <span className="font-semibold">Password Default:</span> <code className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-mono font-bold">admin123</code>
+                                </div>
                             </div>
                         </div>
                     )}
